@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2018 The Ulord Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -31,6 +31,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include <boost/unordered_map.hpp>
 
@@ -46,6 +47,14 @@ class CValidationState;
 
 struct CNodeStateStats;
 struct LockPoints;
+
+// enough number of block delete map about name
+#define MIN_ACCOUNT_NAME_NUMBER 50 
+// Displays the maximum number of addresses bound to the same account name
+#define MAX_NUM 5
+
+// STANDARD ACCOUNT NAME LENGTH
+#define MAX_ACCOUNT_SIZE 12
 
 /** Default for accepting alerts from the P2P network. */
 static const bool DEFAULT_ALERTS = false;
@@ -76,7 +85,8 @@ static const unsigned int MAX_BLOCKFILE_SIZE = 0x8000000; // 128 MiB
 static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; // 16 MiB
 /** The pre-allocation chunk size for rev?????.dat files (since 0.8) */
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
-
+/** Maximum number of Bytes message allowed*/
+static const unsigned int MAX_MESSAGE_SIZE = 80;
 /** Maximum number of script-checking threads allowed */
 static const int MAX_SCRIPTCHECK_THREADS = 16;
 /** -par default (number of script-checking threads, 0 = auto) */
@@ -747,7 +757,7 @@ bool DisconnectBlocks(int blocks);
 void ReprocessBlocks(int nBlocks);
 
 /** Apply the effects of this block (with given index) on the UTXO set represented by coins */
-bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, CClaimTrieCache& trieCache, bool fJustCheck = false);
+bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, CClaimTrieCache& trieCache,bool fJustCheck = false);
 
 /** Context-independent validity checks */
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW = true);
@@ -841,6 +851,12 @@ extern CCoinsViewCache *pcoinsTip;
 /** Global variable that points to the active CClaimTrie (protected by cs_main) */                                                                                                                                                                                            
 extern CClaimTrie *pclaimTrie;
 
+/** Global variable that points to the active CClaimTrie account_name (protected by cs_main) */                                                                                                                                                                                            
+extern std::map<std::string,int> g_mStringName;
+
+/** Global variable that points to the active banned account_name (protected by cs_main) */                                                                                                                                                                                            
+extern std::vector<std::string> g_vBanName;
+
 /** Global variable that points to the active block tree (protected by cs_main) */
 extern CBlockTreeDB *pblocktree;
 
@@ -874,4 +890,10 @@ static const unsigned int REJECT_ALREADY_KNOWN = 0x101;
 /** Transaction conflicts with a transaction already known */
 static const unsigned int REJECT_CONFLICT = 0x102;
 
+#ifdef ENABLE_ADDRSTAT
+int MyAddrDb_init();
+void UpdateAddrMyDb(const int  height );
+void AddAddrMyDbIndex(const CScript& scriptPubKey, CAmount nAmount, unsigned int txIdx ,unsigned int  vIdx, int height );
+#endif // ENABLE_ADDRSTAT
+std::string GetAddrString(uint160 hash);
 #endif // BITCOIN_MAIN_H

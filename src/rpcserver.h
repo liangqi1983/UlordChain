@@ -222,7 +222,10 @@ extern UniValue setaccount(const UniValue& params, bool fHelp);
 extern UniValue getaccount(const UniValue& params, bool fHelp);
 extern UniValue getaddressesbyaccount(const UniValue& params, bool fHelp);
 extern UniValue sendtoaddress(const UniValue& params, bool fHelp);
+extern UniValue sendalltoaddress(const UniValue& params, bool fHelp);
+extern UniValue uploadmessage(const UniValue &params, bool fHelp);
 extern UniValue sendfromAtoB(const UniValue &params, bool fHelp);
+extern UniValue sendallfromAtoB(const UniValue &params, bool fHelp);
 extern UniValue signmessage(const UniValue& params, bool fHelp);
 extern UniValue verifymessage(const UniValue& params, bool fHelp);
 extern UniValue getreceivedbyaddress(const UniValue& params, bool fHelp);
@@ -276,6 +279,7 @@ extern UniValue spork(const UniValue& params, bool fHelp);
 extern UniValue masternode(const UniValue& params, bool fHelp);
 extern UniValue masternodelist(const UniValue& params, bool fHelp);
 extern UniValue masternodebroadcast(const UniValue& params, bool fHelp);
+extern UniValue signmnpmessage(const UniValue& params, bool fHelp);
 extern UniValue gobject(const UniValue& params, bool fHelp);
 extern UniValue getgovernanceinfo(const UniValue& params, bool fHelp);
 extern UniValue getsuperblockbudget(const UniValue& params, bool fHelp);
@@ -283,6 +287,7 @@ extern UniValue voteraw(const UniValue& params, bool fHelp);
 extern UniValue mnsync(const UniValue& params, bool fHelp);
 
 extern UniValue getblockcount(const UniValue& params, bool fHelp); // in rpcblockchain.cpp
+extern UniValue getsuperblock(const UniValue& params, bool fHelp);
 extern UniValue getbestblockhash(const UniValue& params, bool fHelp);
 extern UniValue getdifficulty(const UniValue& params, bool fHelp);
 extern UniValue settxfee(const UniValue& params, bool fHelp);
@@ -300,6 +305,8 @@ extern UniValue getchaintips(const UniValue& params, bool fHelp);
 extern UniValue invalidateblock(const UniValue& params, bool fHelp);
 extern UniValue reconsiderblock(const UniValue& params, bool fHelp);
 extern UniValue getspentinfo(const UniValue& params, bool fHelp);
+extern UniValue getcointip(const UniValue& params, bool fHelp);
+
 
 /*claimtrie*/
 extern UniValue claimname(const UniValue& params, bool fHelp);    //in rpcwallet.cpp
@@ -312,13 +319,15 @@ extern UniValue listnameclaims(const UniValue &params, bool fHelp);
 extern UniValue abandonsupport(const UniValue &params, bool fHelp);
 extern UniValue supportclaim(const UniValue&params, bool fHelp);
 extern UniValue abandonsupport(const UniValue &params, bool fHelp);
+extern UniValue sendtoaccountname(const UniValue &params, bool fHelp);
+
 
 typedef std::pair<CClaimValue, std::vector<CSupportValue> > claimAndSupportsType;
 typedef std::map<uint160, claimAndSupportsType> claimSupportMapType;
 typedef std::map<uint160, std::vector<CSupportValue> > supportsWithoutClaimsMapType;
 
-
-extern UniValue getclaimsintrie(const UniValue& params, bool fHelp);   //in rpc/claimtrie.cpp
+//claim interface command Implementation in rpcwallet.cpp
+extern UniValue getclaimsintrie(const UniValue& params, bool fHelp);   
 extern UniValue getclaimtrie(const UniValue& params, bool fHelp);
 extern bool getValueForClaim(const COutPoint& out, std::string& sValue);
 extern UniValue getvalueforname(const UniValue& params, bool fHelp);
@@ -332,6 +341,21 @@ extern UniValue gettotalvalueofclaims(const UniValue& params, bool fHelp);
 extern UniValue getclaimsfortx(const UniValue& params, bool fHelp);
 extern UniValue proofToJSON(const CClaimTrieProof& proof);
 extern UniValue getnameproof(const UniValue& params, bool fHelp);
+extern UniValue getaccountnamefromaddress(const UniValue& params, bool fHelp);
+
+// atomic swap contract of transaction about RPC 
+extern UniValue crosschaininitial(const UniValue &params, bool fHelp);
+extern UniValue crosschainparticipate(const UniValue &params, bool fHelp);
+extern UniValue crosschainredeem(const UniValue &params, bool fHelp);
+extern UniValue crosschainrefund(const UniValue &params, bool fHelp);
+extern UniValue crosschainextractsecret(const UniValue &params, bool fHelp);
+extern UniValue crosschainauditcontract(const UniValue &params, bool fHelp);
+
+
+// lock coin for some time
+extern UniValue lockcoin(const UniValue &params, bool fHelp);
+extern UniValue unlockcoin(const UniValue &params, bool fHelp);
+
 
 bool StartRPC();
 void InterruptRPC();

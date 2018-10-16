@@ -16,8 +16,8 @@
 #include "util.h"
 #include "spork.h"
 #include "utilstrencodings.h"
-#ifdef ENABLE_WALLET
 #include "masternode-sync.h"
+#ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
 #endif
@@ -32,6 +32,23 @@
 
 using namespace std;
 
+UniValue gettotalsubsidy(const int nCount)
+{
+	const Consensus::Params cp = Params().GetConsensus();
+    CAmount total = 0;
+    for (int pos = 0; pos <= nCount; pos++)
+    {
+        total += GetMinerSubsidy(pos, cp);
+        if(pos >= cp.nSuperblockStartBlock && 0 == (pos % cp.nSuperblockCycle)) {
+            total += GetFoundersReward(pos, cp);
+            if(pos >= cp.nMasternodePaymentsStartBlock)
+                total += GetBudget(pos, cp);
+        } else {
+            total += GetMasternodePayment(pos);
+        }
+    }
+    return ValueFromAmount(total);
+}
 /**
  * @note Do not add or change anything in the information returned by this
  * method. `getinfo` exists for backwards-compatibility only. It combines
@@ -47,9 +64,10 @@ using namespace std;
  **/
 UniValue getinfo(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 0)
+    if (fHelp || params.size() >1)
         throw runtime_error(
             "getinfo\n"
+            "getinfo subsidy\n"
             "Returns an object containing various state info.\n"
             "\nResult:\n"
             "{\n"
@@ -73,8 +91,14 @@ UniValue getinfo(const UniValue& params, bool fHelp)
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("getinfo", "")
-            + HelpExampleRpc("getinfo", "")
+            + HelpExampleRpc("getinfo", "subsidy")
         );
+
+    string str_param;
+    if(params.size() ==1)
+    {
+      str_param  = params[0].get_str();
+    }
 
 #ifdef ENABLE_WALLET
     LOCK2(cs_main, pwalletMain ? &pwalletMain->cs_wallet : NULL);
@@ -112,6 +136,10 @@ UniValue getinfo(const UniValue& params, bool fHelp)
     obj.push_back(Pair("paytxfee",      ValueFromAmount(payTxFee.GetFeePerK())));
 #endif
     obj.push_back(Pair("relayfee",      ValueFromAmount(::minRelayTxFee.GetFeePerK())));
+
+    if(str_param.compare("subsidy") == 0)
+        obj.push_back(Pair("totalsupply",      gettotalsubsidy(chainActive.Height())));
+
     obj.push_back(Pair("errors",        GetWarnings("statusbar")));
     return obj;
 }
@@ -259,7 +287,10 @@ UniValue spork(const UniValue& params, bool fHelp)
         "spork <name> [<value>]\n"
         "<name> is the corresponding spork name, or 'show' to show all current spork settings, active to show which sporks are active"
         "<value> is a epoch datetime to enable or disable spork"
-        + HelpRequiringPassphrase());
+#ifdef ENABLE_WALLET
+        + HelpRequiringPassphrase()
+#endif // ENABLE_WALLET
+        );
 }
 
 UniValue validateaddress(const UniValue& params, bool fHelp)
@@ -283,8 +314,8 @@ UniValue validateaddress(const UniValue& params, bool fHelp)
             "  \"account\" : \"account\"         (string) DEPRECATED. The account associated with the address, \"\" is the default account\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("validateaddress", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"")
-            + HelpExampleRpc("validateaddress", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"")
+            + HelpExampleCli("validateaddress", "\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"")
+            + HelpExampleRpc("validateaddress", "\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"")
         );
 
 #ifdef ENABLE_WALLET
@@ -408,9 +439,9 @@ UniValue createmultisig(const UniValue& params, bool fHelp)
 
             "\nExamples:\n"
             "\nCreate a multisig address from 2 addresses\n"
-            + HelpExampleCli("createmultisig", "2 \"[\\\"Xt4qk9uKvQYAonVGSZNXqxeDmtjaEWgfrs\\\",\\\"XoSoWQkpgLpppPoyyzbUFh1fq2RBvW6UK1\\\"]\"") +
+            + HelpExampleCli("createmultisig", "2 \"[\\\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\\\",\\\"UYLbXhLFBaByLeREMFnLMh6H7GPdu5aQhV\\\"]\"") +
             "\nAs a json rpc call\n"
-            + HelpExampleRpc("createmultisig", "2, \"[\\\"Xt4qk9uKvQYAonVGSZNXqxeDmtjaEWgfrs\\\",\\\"XoSoWQkpgLpppPoyyzbUFh1fq2RBvW6UK1\\\"]\"")
+            + HelpExampleRpc("createmultisig", "2, \"[\\\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\\\",\\\"UYLbXhLFBaByLeREMFnLMh6H7GPdu5aQhV\\\"]\"")
         ;
         throw runtime_error(msg);
     }
@@ -443,11 +474,11 @@ UniValue verifymessage(const UniValue& params, bool fHelp)
             "\nUnlock the wallet for 30 seconds\n"
             + HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") +
             "\nCreate the signature\n"
-            + HelpExampleCli("signmessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\" \"my message\"") +
+            + HelpExampleCli("signmessage", "\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\" \"my message\"") +
             "\nVerify the signature\n"
-            + HelpExampleCli("verifymessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\" \"signature\" \"my message\"") +
+            + HelpExampleCli("verifymessage", "\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\" \"signature\" \"my message\"") +
             "\nAs json rpc\n"
-            + HelpExampleRpc("verifymessage", "\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\", \"signature\", \"my message\"")
+            + HelpExampleRpc("verifymessage", "\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\", \"signature\", \"my message\"")
         );
 
     LOCK(cs_main);
@@ -513,6 +544,7 @@ UniValue setmocktime(const UniValue& params, bool fHelp)
 }
 
 /*this func need to update to get all kinds of address*/
+/*have to use dest class*/
 bool getAddressFromIndex(const int &type, const uint160 &hash, std::string &address)
 {
     if (type == 2) {
@@ -598,8 +630,8 @@ UniValue getaddressmempool(const UniValue& params, bool fHelp)
             "  }\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("getaddressmempool", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-            + HelpExampleRpc("getaddressmempool", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            + HelpExampleCli("getaddressmempool", "'{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}'")
+            + HelpExampleRpc("getaddressmempool", "{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}")
         );
 
     std::vector<std::pair<uint160, int> > addresses;
@@ -668,8 +700,8 @@ UniValue getaddressutxos(const UniValue& params, bool fHelp)
             "  }\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("getaddressutxos", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-            + HelpExampleRpc("getaddressutxos", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            + HelpExampleCli("getaddressutxos", "'{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}'")
+            + HelpExampleRpc("getaddressutxos", "{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}")
         );
 
     std::vector<std::pair<uint160, int> > addresses;
@@ -736,8 +768,8 @@ UniValue getaddressdeltas(const UniValue& params, bool fHelp)
             "  }\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("getaddressdeltas", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-            + HelpExampleRpc("getaddressdeltas", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            + HelpExampleCli("getaddressdeltas", "'{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}'")
+            + HelpExampleRpc("getaddressdeltas", "{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}")
         );
 
 
@@ -816,8 +848,8 @@ UniValue getaddressbalance(const UniValue& params, bool fHelp)
             "  \"received\"  (string) The total number of satoshis received (including change)\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("getaddressbalance", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-            + HelpExampleRpc("getaddressbalance", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            + HelpExampleCli("getaddressbalance", "'{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}'")
+            + HelpExampleRpc("getaddressbalance", "{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}")
         );
 
     std::vector<std::pair<uint160, int> > addresses;
@@ -874,8 +906,8 @@ UniValue getaddresstxids(const UniValue& params, bool fHelp)
             "  ,...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("getaddresstxids", "'{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}'")
-            + HelpExampleRpc("getaddresstxids", "{\"addresses\": [\"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwg\"]}")
+            + HelpExampleCli("getaddresstxids", "'{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}'")
+            + HelpExampleRpc("getaddresstxids", "{\"addresses\": [\"URZFLwbfLeFeiZ2cEEcgcgBggBZBvuMkak\"]}")
         );
 
     std::vector<std::pair<uint160, int> > addresses;
@@ -979,6 +1011,56 @@ UniValue getspentinfo(const UniValue& params, bool fHelp)
     obj.push_back(Pair("txid", value.txid.GetHex()));
     obj.push_back(Pair("index", (int)value.inputIndex));
     obj.push_back(Pair("height", value.blockHeight));
+
+    return obj;
+}
+
+UniValue getcointip(const UniValue& params, bool fHelp)
+{
+
+    if (fHelp || params.size() != 1 || !params[0].isObject())
+        throw runtime_error(
+            "getcointip\n"
+            "\nReturns the txid and index where an output is spent.\n"
+            "\nArguments:\n"
+            "{\n"
+            "  \"txid\" (string) The hex string of the txid\n"
+            "  \"index\" (number) The start block height\n"
+            "}\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"txid\"  (string) The transaction id\n"
+            "  \"index\"  (number) The spending input index\n"
+            "  ,...\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getcointip", "'{\"txid\": \"0437cd7f8525ceed2324359c2d0ba26006d92d856a9c20fa0241106ee5a597c9\", \"index\": 0}'")
+            + HelpExampleRpc("getcointip", "{\"txid\": \"0437cd7f8525ceed2324359c2d0ba26006d92d856a9c20fa0241106ee5a597c9\", \"index\": 0}")
+        );
+
+    UniValue txidValue = find_value(params[0].get_obj(), "txid");
+    UniValue indexValue = find_value(params[0].get_obj(), "index");
+
+    if (!txidValue.isStr() || !indexValue.isNum()) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid txid or index");
+    }
+
+    uint256 txid = ParseHashV(txidValue, "txid");
+    int outputIndex = indexValue.get_int();
+
+    CCoins coins;
+    if(!pcoinsTip->GetCoins(txid, coins) ||
+       (unsigned int)outputIndex>=coins.vout.size() ||
+       coins.vout[outputIndex].IsNull()) {
+        LogPrint("masternode", "CMasternodeBroadcast::CheckOutpoint -- Failed to find Masternode UTXO, masternode=%s\n", txid.ToString());
+        return false;
+    }
+
+
+    UniValue obj(UniValue::VOBJ);
+    obj.push_back(Pair("txid", txid.GetHex()));
+    obj.push_back(Pair("index", (int)outputIndex));
+
 
     return obj;
 }

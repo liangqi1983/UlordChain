@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2018 The Ulord Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -39,15 +39,16 @@
 #include "utilstrencodings.h"
 #include "validationinterface.h"
 #include "versionbits.h"
-
-#include "darksend.h"
+#include "rpcprotocol.h"
+#include "privsend.h"
 #include "governance.h"
 #include "instantx.h"
 #include "masternode-payments.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
-
+#include "governance-classes.h"
 #include <sstream>
+#include <regex>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
@@ -612,6 +613,8 @@ CBlockIndex* FindForkInGlobalIndex(const CChain& chain, const CBlockLocator& loc
 CCoinsViewCache *pcoinsTip = NULL;
 CClaimTrie *pclaimTrie = NULL; // claim operation
 CBlockTreeDB *pblocktree = NULL;
+std::vector<std::string> g_vBanName;
+
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1082,8 +1085,15 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState &state, const C
     // Rather not work on nonstandard transactions (unless -testnet/-regtest)
     string reason;
     if (fRequireStandard && !IsStandardTx(tx, reason))
+	{
         return state.DoS(0, false, REJECT_NONSTANDARD, reason);
+	}
 
+	if ( !VerifyAccountName(tx) )
+	{
+	    return state.DoS(0, false, REJECT_ACOOUNTNAME_CREATE, "reject accountname is created");
+	}
+	
     // Don't relay version 2 transactions until CSV is active, and we can be
     // sure that such transactions will be mined (unless we're on
     // -testnet/-regtest).
@@ -1236,7 +1246,12 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState &state, const C
 
         CAmount nValueOut = tx.GetValueOut();
         CAmount nFees = nValueIn-nValueOut;
-        // nModifiedFees includes any fee deltas from PrioritiseTransaction
+        // nModifiedFees includes any fee deltas from PrioritiseTransaction 
+	    //  minTxFee  GetMinimumFee, next step add mempool will judge pool fee
+	    if(nFees<=0) 
+	    {
+	        return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "insufficient nFees");
+	    }    
         CAmount nModifiedFees = nFees;
         double nPriorityDummy = 0;
         pool.ApplyDeltas(hash, nPriorityDummy, nModifiedFees);
@@ -1494,7 +1509,7 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState &state, const C
         // Remove conflicting transactions from the mempool
         BOOST_FOREACH(const CTxMemPool::txiter it, allConflicting)
         {
-            LogPrint("mempool", "replacing tx %s with %s for %s ULD additional fees, %d delta bytes\n",
+            LogPrint("mempool", "replacing tx %s with %s for %s UT additional fees, %d delta bytes\n",
                     it->GetTx().GetHash().ToString(),
                     hash.ToString(),
                     FormatMoney(nModifiedFees - nConflictingFees),
@@ -1770,31 +1785,31 @@ CAmount GetMasternodePayment(const int height)
 
     if (height < starting) return 0;
 
-    if (height < starting + period)			// in the first year
+    if (height < period)			// in the first year
     {
   	return cp.mnReward1;
     } 
-    else if (height < starting + period * 2)		// in first 2 years
+    else if (height < period * 2)		// in first 2 years
     {
         return cp.mnReward2;
     }
-    else if (height < starting + period * 3)		// 3rd year
+    else if (height < period * 3)		// 3rd year
     {
-	return cp.mnReward2 * 2;
+		return (cp.mnReward2 / 2) * 3;
     }
-    else if (height < starting + period * 4)		// 4th
+    else if (height < period * 4)		// 4th
     {
-	return cp.mnReward2 * 3;
+		return cp.mnReward2 * 2;
     }
     else						// 5th and after
     {
-  	int halvings = (height - intval) / intval;
-	if (halvings > 63)
-	{
-   	     return 0;
-	}
+  		int halvings = (height - intval) / intval;
+		if (halvings > 63)
+		{
+   	    	return 0;
+		}
 
-	return cp.mnReward5 >> halvings;
+		return cp.mnReward5 >> halvings;
     }
 }
 
@@ -1802,6 +1817,11 @@ CAmount GetBudget(const int height, const Consensus::Params &cp)
 {
     const int beg = cp.nSuperblockStartBlock;
     const int intval = cp.nSubsidyHalvingInterval;
+
+    if(!CSuperblock::IsValidBlockHeight( height))
+    {
+  	return 0;	
+    } 
 	
     if (height < beg)		     // before starting
     {
@@ -1826,6 +1846,12 @@ CAmount GetFoundersReward(const int height, const Consensus::Params &cp)
 {
     const int beg = cp.nSuperblockStartBlock;
     const int end = cp.endOfFoundersReward();
+    
+    if(!CSuperblock::IsValidBlockHeight( height))
+    {
+  	return 0;	
+    } 	
+	
     if (height >= beg && height < end)			// before super block starting
     {
         return cp.foundersReward;
@@ -2275,22 +2301,27 @@ static bool ApplyTxInUndo(const CTxInUndo& undo, CCoinsViewCache& view, CClaimTr
         if(op == OP_CLAIM_NAME || op == OP_UPDATE_CLAIM)
         {   
             uint160 claimId;
+            std::string addr;
             if(op == OP_CLAIM_NAME)
             {   
                 assert(vvchParams.size() == 2 );
                 claimId = ClaimIdHash(out.hash,out.n);
+		std::string temp(vvchParams[1].begin(),vvchParams[1].end());
+		addr = temp;
             }
             else if( op == OP_UPDATE_CLAIM)
             {   
                 assert(vvchParams.size() == 3 );
                 claimId = uint160(vvchParams[1]);
+  		std::string temp(vvchParams[2].begin(),vvchParams[2].end());
+		addr = temp;
             }
             std::string name(vvchParams[0].begin(),vvchParams[0].end());
             int nValidHeight = undo.nClaimValidHeight;
             if(nValidHeight > 0 && nValidHeight >= coins->nHeight)
             {
                  LogPrintf("%s: (txid: %s, nOut: %d) Restoring %s to the claim trie due to a block being disconnected\n", __func__, out.hash.ToString(), out.n, name.c_str());
-                 if ( !trieCache.undoSpendClaim(name, COutPoint(out.hash, out.n), claimId, undo.txout.nValue, coins->nHeight, nValidHeight))
+                 if ( !trieCache.undoSpendClaim(name, COutPoint(out.hash, out.n), claimId, undo.txout.nValue, coins->nHeight, nValidHeight,addr))
                     LogPrintf("%s: Something went wrong inserting the claim\n", __func__);
                  else
                  {  
@@ -2382,14 +2413,14 @@ bool DisconnectBlock(const CBlock& block, CValidationState& state, const CBlockI
         // The CCoins serialization does not serialize negative numbers.
         // No network rules currently depend on the version here, so an inconsistency is harmless
         // but it must be corrected before txout nversion ever influences a network rule.
-if (outs->nVersion != outsBlock.nVersion)
-{
-LogPrintf("main.cpp:2365, outs->nVersion(%d) != outsBlock.nVer(%d), ", outs->nVersion, outsBlock.nVersion);
-outs->nVersion = outsBlock.nVersion;
-}
-        if (outsBlock.nVersion < 0)
+        if (outs->nVersion != outsBlock.nVersion)//TODO:
+        {
+          //LogPrintf("main.cpp:2365, outs->nVersion(%d) != outsBlock.nVer(%d) \n", outs->nVersion, outsBlock.nVersion);
+          outs->nVersion = outsBlock.nVersion;
+        }
+        if (outsBlock.nVersion < 0)//TODO:
             outs->nVersion = outsBlock.nVersion;
-        if (*outs != outsBlock)
+        if (*outs != outsBlock)//TODO:
             fClean = fClean && error("DisconnectBlock(): added transaction mismatch? database corrupted");
 
 		 // remove any claims
@@ -2644,6 +2675,118 @@ public:
     }
 };
 
+//
+#ifdef ENABLE_ADDRSTAT
+bool  g_bSqlClose=false;
+int   g_sqlblockheight = 0;
+
+ofstream * g_fout;//( "dbdata1.txt");
+int   g_filecount;
+int   g_reccount;
+
+int MyAddrDb_init()
+{
+    g_filecount=1; 
+    g_reccount=0;
+    char filepath[100]={""};
+    sprintf(filepath,"dbdata%d.txt", g_filecount);
+	std::string file = GetFilePath(filepath);
+	LogPrintf("MyAddrDb_init:new file  %s ",file );
+    g_fout= new ofstream(file.c_str());
+    
+    return 0;
+}
+
+void UpdateAddrMyDb(const int  height )
+{
+    if(g_bSqlClose==true) return;
+    if(height!=0 &&height <= g_sqlblockheight)
+    {
+        //LogPrintf("sqldb"," update addr height %d \n",g_sqlblockheight );
+      //cout << "update height height"<<g_sqlblockheight << endl;
+
+        return;
+    }
+	if(height!=g_sqlblockheight+1)
+	 {
+              LogPrintf("height check  update addr height %d %d ",height,g_sqlblockheight );
+	      cout << "update height height"<<g_sqlblockheight<< " " << height << endl;
+	      exit(1);
+	 }
+	 g_sqlblockheight=height;
+
+    if(g_reccount > 1000000 )
+    {
+        char filepath[100]={""};
+        g_filecount++;
+        sprintf(filepath,"dbdata%d.txt", g_filecount);
+		std::string file = GetFilePath(filepath);
+        LogPrintf("UpdateAddrMyDb:new file height check  update addr height %d  %s ",height,file );
+        g_fout->close();
+        delete g_fout;
+        g_fout= new  ofstream(file.c_str());
+        g_reccount=1;
+    }
+    return;
+}
+
+int my_insert(const char * pAddr , CAmount amount,int nHeight,int txIdx,int type)
+{
+    if(!g_fout->is_open())
+    {
+    	printf("file is not open\n");
+		return 0;
+    }
+    *g_fout<<pAddr<<","<<amount<<","<<nHeight<<","<<txIdx<<","<<type<<endl;
+    g_reccount++;
+    return 1;
+}
+
+void AddAddrMyDbIndex(const CScript& scriptPubKey, CAmount nAmount, unsigned int txIdx ,unsigned int  vIdx, int height )
+{
+    if(height!=0 &&height <= g_sqlblockheight)
+    {
+        //LogPrintf("sqldb"," update addr height %d \n",g_sqlblockheight );
+		//cout << "update height height"<<g_sqlblockheight << endl;
+
+        return;
+    }
+    txnouttype type;
+    std::vector<CTxDestination> addresses;
+    int nRequired;
+    int  nCount;
+    if(nAmount==0)return;
+    if (!ExtractDestinations(scriptPubKey, type, addresses, nRequired)) {
+        //CScript strippedScript = StripClaimScriptPrefix(scriptPubKey);
+		//if (!ExtractDestinations(strippedScript, type, addresses, nRequired))
+		{
+        	LogPrintf("error Failed to extract %d tx %d vdx %d amount %d addr  %s  \n",height,txIdx,vIdx,nAmount, HexStr(scriptPubKey.begin(), scriptPubKey.end()).c_str() );
+			//LogPrintf("Failed to extract addr  %s  \n",HexStr(scriptPubKey.begin(), scriptPubKey.end()).c_str() );
+			cout << "Failed to extract  "<<type<<"height"<<height<<"txidx"<<txIdx  << endl;
+			cout << "hex" <<HexStr(scriptPubKey.begin(), scriptPubKey.end()) << endl;
+ 			//exit(1);
+ 		}
+    }
+	nCount=0;
+    for (const CTxDestination& addr : addresses)
+    {
+		if(nCount==0)
+            my_insert(CBitcoinAddress(addr).ToString().c_str() , nAmount,height,txIdx,type);
+    	else
+        {
+            LogPrintf("error Failed to extract multiaddr hei %d type %d  tx %d vdx %d amount %d addr  %s  \n",height,type,txIdx,vIdx,nAmount,CBitcoinAddress(addr).ToString()); 
+	    	cout <<"addr" <<nCount<<"type" <<type<<" "<< CBitcoinAddress(addr).ToString()<< endl;
+ 
+        }
+        nCount++;
+    }
+}
+#endif // ENABLE_ADDRSTAT
+//
+
+std::string GetAddrString(uint160 hash){ return CBitcoinAddress(CKeyID(hash)).ToString(); }
+
+
 // Protected by cs_main
 static ThresholdConditionCache warningcache[VERSIONBITS_NUM_BITS];
 
@@ -2680,7 +2823,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         if (!fJustCheck)
 		{
             view.SetBestBlock(pindex->GetBlockHash());
-            trieCache.setBestBlock(pindex->GetBlockHash());
 		}
         return true;
     }
@@ -2830,6 +2972,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                         // and to find the amount and address from an input
                         spentIndex.push_back(make_pair(CSpentIndexKey(input.prevout.hash, input.prevout.n), CSpentIndexValue(txhash, j, pindex->nHeight, prevout.nValue, addressType, hashBytes)));
                     }
+#ifdef ENABLE_ADDRSTAT
+					AddAddrMyDbIndex(prevout.scriptPubKey,prevout.nValue * -1,i,j,pindex->nHeight);
+#endif // ENABLE_ADDRSTAT
                 }
 
             }
@@ -2923,8 +3068,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     {   
                         assert(vvchParams.size() == 2);
                         std::string name(vvchParams[0].begin(), vvchParams[0].end());
+						std::string addr(vvchParams[1].begin(),vvchParams[1].end());
                         LogPrintf("%s: Inserting %s into the claim trie. Tx: %s, nOut: %d\n", __func__, name, tx.GetHash().GetHex(), l);
-                        if (!trieCache.addClaim(name, COutPoint(tx.GetHash(), l), ClaimIdHash(tx.GetHash(), l), txout.nValue, pindex->nHeight))
+                        if (!trieCache.addClaim(name, COutPoint(tx.GetHash(), l), ClaimIdHash(tx.GetHash(), l), txout.nValue, pindex->nHeight,addr))
                         {
                             LogPrintf("%s: Something went wrong inserting the claim\n", __func__);
                         }
@@ -2933,6 +3079,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     {
                         assert(vvchParams.size() == 3);
                         std::string name(vvchParams[0].begin(), vvchParams[0].end());
+						std::string addr(vvchParams[2].begin(),vvchParams[2].end());
                         uint160 claimId(vvchParams[1]);
                         LogPrintf("%s: Got a claim update. Name: %s, claimId: %s, new txid: %s, nOut: %d\n", __func__, name, claimId.GetHex(), tx.GetHash().GetHex(), l);
                         spentClaimsType::iterator itSpent;
@@ -2946,7 +3093,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                         if (itSpent != spentClaims.end())
                         {
                             spentClaims.erase(itSpent);
-                            if (!trieCache.addClaim(name, COutPoint(tx.GetHash(), l), claimId, txout.nValue, pindex->nHeight))
+                            if (!trieCache.addClaim(name, COutPoint(tx.GetHash(), l), claimId, txout.nValue, pindex->nHeight,addr))
                             {
                                 LogPrintf("%s: Something went wrong updating the claim\n", __func__);
                             }
@@ -2979,6 +3126,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     // record unspent output
                     addressUnspentIndex.push_back(make_pair(CAddressUnspentKey(addressType, hashBytes, txhash, k), CAddressUnspentValue(out.nValue, out.scriptPubKey, pindex->nHeight)));
 				}
+#ifdef ENABLE_ADDRSTAT
+				AddAddrMyDbIndex(out.scriptPubKey,out.nValue,i,k,pindex->nHeight);
+#endif // ENABLE_ADDRSTAT
             }
         }
 
@@ -3010,9 +3160,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         vPos.push_back(std::make_pair(tx.GetHash(), pos));
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
+#ifdef ENABLE_ADDRSTAT
+	UpdateAddrMyDb(pindex->nHeight);
+#endif // ENABLE_ADDRSTAT
 
     assert(trieCache.incrementBlock(blockundo.insertUndo, blockundo.expireUndo, blockundo.insertSupportUndo, blockundo.expireSupportUndo, blockundo.takeoverHeightUndo));
-
     /*if (trieCache.getMerkleHash() != block.hashClaimTrie)
     {
         return state.DoS(100,error("ConnectBlock() : the merkle root of the claim trie does not match "
@@ -3023,7 +3175,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime3 - nTime2), 0.001 * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * 0.000001);
 
-    // ULD : MODIFIED TO CHECK MASTERNODE PAYMENTS AND SUPERBLOCKS
+    // UT : MODIFIED TO CHECK MASTERNODE PAYMENTS AND SUPERBLOCKS
 
     // It's possible that we simply don't have enough data and this could fail
     // (i.e. block itself could be a correct one and we need to store it),
@@ -3033,16 +3185,16 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     // TODO: resync data (both ways?) and try to reprocess this block later.
     CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
     std::string strError = "";
-    if (!IsBlockValueValid(block, pindex->nHeight, blockReward, strError)) {
-        return state.DoS(0, error("ConnectBlock(ULD): %s", strError), REJECT_INVALID, "bad-cb-amount");
+    if (!IsBlockValueValid(block, pindex->nHeight,nFees, blockReward, strError)) {
+        return state.DoS(0, error("ConnectBlock(UT): %s", strError), REJECT_INVALID, "bad-cb-amount");
     }
 
     if (!IsBlockPayeeValid(block.vtx[0], pindex->nHeight, blockReward)) {
         mapRejectedBlocks.insert(make_pair(block.GetHash(), GetTime()));
-        return state.DoS(0, error("ConnectBlock(ULD): couldn't find masternode or superblock payments"),
+        return state.DoS(0, error("ConnectBlock(UT): couldn't find masternode or superblock payments"),
                                 REJECT_INVALID, "bad-cb-payee");
     }
-    // END ULD
+    // END UT
 
     if (!control.Wait())
         return state.DoS(100, false);
@@ -3406,7 +3558,7 @@ bool static ConnectTip(CValidationState& state, const CChainParams& chainparams,
     BOOST_FOREACH(const CTransaction &tx, pblock->vtx) {
         SyncWithWallets(tx, pblock);
     }
-
+	
     int64_t nTime6 = GetTimeMicros(); nTimePostConnect += nTime6 - nTime5; nTimeTotal += nTime6 - nTime1;
     LogPrint("bench", "  - Connect postprocess: %.2fms [%.2fs]\n", (nTime6 - nTime5) * 0.001, nTimePostConnect * 0.000001);
     LogPrint("bench", "- Connect block: %.2fms [%.2fs]\n", (nTime6 - nTime1) * 0.001, nTimeTotal * 0.000001);
@@ -3990,7 +4142,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                              REJECT_INVALID, "bad-cb-multiple");
 
 
-    // ULD : CHECK TRANSACTIONS FOR INSTANTSEND
+    // UT : CHECK TRANSACTIONS FOR INSTANTSEND
 
     if(sporkManager.IsSporkActive(SPORK_3_INSTANTSEND_BLOCK_FILTERING)) {
         // We should never accept block which conflicts with completed transaction lock,
@@ -4010,17 +4162,17 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                     instantsend.Relay(hashLocked);
                     LOCK(cs_main);
                     mapRejectedBlocks.insert(make_pair(block.GetHash(), GetTime()));
-                    return state.DoS(0, error("CheckBlock(ULD): transaction %s conflicts with transaction lock %s",
+                    return state.DoS(0, error("CheckBlock(UT): transaction %s conflicts with transaction lock %s",
                                                 tx.GetHash().ToString(), hashLocked.ToString()),
                                      REJECT_INVALID, "conflict-tx-lock");
                 }
             }
         }
     } else {
-        LogPrintf("CheckBlock(ULD): spork is off, skipping transaction locking checks\n");
+        LogPrintf("CheckBlock(UT): spork is off, skipping transaction locking checks\n");
     }
 
-    // END ULD
+    // END UT
 
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
@@ -4114,6 +4266,13 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIn
         if (!IsFinalTx(tx, nHeight, nLockTimeCutoff)) {
             return state.DoS(10, error("%s: contains a non-final transaction", __func__), REJECT_INVALID, "bad-txns-nonfinal");
         }
+		if ( chainActive.Height() > 16000 )
+		{
+			if ( !VerifyAccountName(tx) )
+			{
+				return state.DoS(0, false, REJECT_ACOOUNTNAME_CREATE, "reject accountname is created");
+			}
+		}
     }
 
     // Enforce block.nVersion=2 rule that the coinbase starts with serialized block height
@@ -5272,7 +5431,7 @@ bool static AlreadyHave(const CInv& inv) EXCLUSIVE_LOCKS_REQUIRED(cs_main)
         return mnodeman.mapSeenMasternodePing.count(inv.hash);
 
     case MSG_DSTX:
-        return mapDarksendBroadcastTxes.count(inv.hash);
+        return mapPrivSendBroadcastTxes.count(inv.hash);
 
     case MSG_GOVERNANCE_OBJECT:
     case MSG_GOVERNANCE_OBJECT_VOTE:
@@ -5495,10 +5654,10 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                 }
 
                 if (!pushed && inv.type == MSG_DSTX) {
-                    if(mapDarksendBroadcastTxes.count(inv.hash)) {
+                    if(mapPrivSendBroadcastTxes.count(inv.hash)) {
                         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                         ss.reserve(1000);
-                        ss << mapDarksendBroadcastTxes[inv.hash];
+                        ss << mapPrivSendBroadcastTxes[inv.hash];
                         pfrom->PushMessage(NetMsgType::DSTX, ss);
                         pushed = true;
                     }
@@ -6037,7 +6196,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         vector<uint256> vEraseQueue;
         CTransaction tx;
         CTxLockRequest txLockRequest;
-        CDarksendBroadcastTx dstx;
+        CPrivsendBroadcastTx dstx;
         int nInvType = MSG_TX;
 
         // Read data and assign inv type
@@ -6066,7 +6225,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         } else if (strCommand == NetMsgType::DSTX) {
             uint256 hashTx = tx.GetHash();
 
-            if(mapDarksendBroadcastTxes.count(hashTx)) {
+            if(mapPrivSendBroadcastTxes.count(hashTx)) {
                 LogPrint("privatesend", "DSTX -- Already have %s, skipping...\n", hashTx.ToString());
                 return true; // not an error
             }
@@ -6107,7 +6266,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             if (strCommand == NetMsgType::DSTX) {
                 LogPrintf("DSTX -- Masternode transaction accepted, txid=%s, peer=%d\n",
                         tx.GetHash().ToString(), pfrom->id);
-                mapDarksendBroadcastTxes.insert(make_pair(tx.GetHash(), dstx));
+                mapPrivSendBroadcastTxes.insert(make_pair(tx.GetHash(), dstx));
             } else if (strCommand == NetMsgType::TXLOCKREQUEST) {
                 LogPrintf("TXLOCKREQUEST -- Transaction Lock Request accepted, txid=%s, peer=%d\n",
                         tx.GetHash().ToString(), pfrom->id);
@@ -6635,7 +6794,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (found)
         {
             //probably one the extensions
-            darkSendPool.ProcessMessage(pfrom, strCommand, vRecv);
+            privSendPool.ProcessMessage(pfrom, strCommand, vRecv);
             mnodeman.ProcessMessage(pfrom, strCommand, vRecv);
             mnpayments.ProcessMessage(pfrom, strCommand, vRecv);
             instantsend.ProcessMessage(pfrom, strCommand, vRecv);
@@ -7172,3 +7331,181 @@ public:
         mapOrphanTransactionsByPrev.clear();
     }
 } instance_of_cmaincleanup;
+
+// verify special transaction about OP_CLAIM_NAME
+bool VerifyAccountName(const CTransaction& tx)
+{
+	int i_ret;
+	BOOST_FOREACH(const CTxOut& txout, tx.vout) {
+   		i_ret = VerifyClaimScriptPrefix(txout.scriptPubKey,txout);
+		switch (i_ret)
+		{
+			case STAND_SCRIPT_OR_SPECIAL_SCRIPT:
+				break;
+			case ACCOUNTNAME_EXISTS:
+			case ACCOUNTNAME_ILLEGAL:
+			case ACCOUNTNAME_INVAILDCASH:
+			case ACCOUNTNAME_TOOLONG:
+			default:
+				return false;
+		}
+    }
+	return true;
+}
+
+int VerifyClaimScriptPrefix(const CScript& scriptIn,const CTxOut& txout)
+{
+    int op;
+    return VerifyClaimScriptPrefix(scriptIn, op,txout);
+}
+
+int VerifyClaimScriptPrefix(const CScript & scriptIn, int & op, const CTxOut & txout)
+{
+    std::vector<std::vector<unsigned char> > vvchParams;
+    CScript::const_iterator pc = scriptIn.begin();
+
+    return VerifyDecodeClaimScript(scriptIn, op, vvchParams, pc,txout);
+}
+
+
+int VerifyDecodeClaimScript(const CScript& scriptIn, int& op, std::vector<std::vector<unsigned char> >& vvchParams,const CTxOut& txout)
+{
+    CScript::const_iterator pc = scriptIn.begin();
+    return VerifyDecodeClaimScript(scriptIn, op, vvchParams, pc,txout);
+}
+
+
+int VerifyDecodeClaimScript(const CScript& scriptIn, int& op, std::vector<std::vector<unsigned char> >& vvchParams, CScript::const_iterator& pc,const CTxOut& txout)
+{
+    opcodetype opcode;
+    if (!scriptIn.GetOp(pc, opcode))
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+    
+    if (opcode != OP_CLAIM_NAME)
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+	
+    op = opcode;
+
+    std::vector<unsigned char> vchParam1;
+    std::vector<unsigned char> vchParam2;
+    std::vector<unsigned char> vchParam3;
+    // Valid formats:
+    // OP_CLAIM_NAME vchName vchValue OP_2DROP OP_DROP pubkeyscript
+    // OP_UPDATE_CLAIM vchName vchClaimId vchValue OP_2DROP OP_2DROP pubkeyscript
+    // OP_SUPPORT_CLAIM vchName vchClaimId OP_2DROP OP_DROP pubkeyscript
+    // All others are invalid.
+
+    if (!scriptIn.GetOp(pc, opcode, vchParam1) || opcode < 0 || opcode > OP_PUSHDATA4)
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+
+	std::string sName(vchParam1.begin(),vchParam1.end());
+	std::string s_tempname;
+	std::map<std::string,int>::iterator m_it;
+	std::vector<std::string>::iterator v_it;
+	int i_currentheight = chainActive.Height();
+	CClaimValue claim;
+	std::string szReg = "^[a-z0-5]+[a-z0-5]$";
+	std::regex reg( szReg );
+	bool b_r;
+	int i_times = g_mStringName.count(sName);
+	LogPrintf("i_times is %d\n",i_times);
+	if ( g_mStringName.end() != g_mStringName.find(sName) )
+	{
+		return ACCOUNTNAME_EXISTS;
+	}
+
+	for ( m_it = g_mStringName.begin() ; m_it != g_mStringName.end() ; m_it++ )
+	{
+		if ( (chainActive.Height() - m_it->second) >= MIN_ACCOUNT_NAME_NUMBER )
+		{
+			s_tempname = m_it->first;
+			if (pclaimTrie->getInfoForName(s_tempname, claim))
+			{
+			g_mStringName.erase(s_tempname);
+				break;
+			}	
+		}
+	}
+	
+	if ( i_times == 0  )
+	{
+		LogPrintf("txout.nValue is %d.%08d\n",txout.nValue/COIN,txout.nValue % COIN);
+		b_r = std::regex_match( sName,reg);
+		if ( !b_r )
+		{
+			return ACCOUNTNAME_ILLEGAL;
+		}
+		
+		for (v_it = g_vBanName.begin(); v_it != g_vBanName.end(); v_it++)
+		{
+			if (!v_it->compare(sName))
+			{
+				return ACCOUNTNAME_ILLEGAL;
+			}
+		}
+		
+		if ( txout.nValue != MAX_ACCOUNT_NAME )
+		{
+			return ACCOUNTNAME_INVAILDCASH;
+		}
+		
+		if (pclaimTrie->getInfoForName(sName, claim))
+		{
+			return ACCOUNTNAME_EXISTS;
+		}
+		if ( sName.size() > MAX_ACCOUNT_SIZE)
+		{
+		    return ACCOUNTNAME_TOOLONG;
+		}
+		g_mStringName.insert(std::pair<std::string,int>(sName,i_currentheight));
+	}
+	
+    if (!scriptIn.GetOp(pc, opcode, vchParam2) || opcode < 0 || opcode > OP_PUSHDATA4)
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+    if (op == OP_UPDATE_CLAIM || op == OP_SUPPORT_CLAIM)
+    {
+        if (vchParam2.size() != 160/8)
+        {
+            return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+        }
+    }
+    if (op == OP_UPDATE_CLAIM)
+    {
+        if (!scriptIn.GetOp(pc, opcode, vchParam3) || opcode < 0 || opcode > OP_PUSHDATA4)
+        {
+            return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+        }
+    }
+    if (!scriptIn.GetOp(pc, opcode) || opcode != OP_2DROP)
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+    if (!scriptIn.GetOp(pc, opcode))
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+    if ((op == OP_CLAIM_NAME || op == OP_SUPPORT_CLAIM) && opcode != OP_DROP)
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+    else if ((op == OP_UPDATE_CLAIM) && opcode != OP_2DROP)
+    {
+        return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+    }
+	
+    vvchParams.push_back(vchParam1);
+    vvchParams.push_back(vchParam2);
+    if (op == OP_UPDATE_CLAIM)
+    {
+        vvchParams.push_back(vchParam3);
+    }
+    return STAND_SCRIPT_OR_SPECIAL_SCRIPT;
+}

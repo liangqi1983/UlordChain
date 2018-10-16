@@ -1,3 +1,4 @@
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 #ifndef MY_TIME_H
 #define MY_TIME_H
 

@@ -8,7 +8,7 @@
 #include "utilstrencodings.h"
 
 using namespace std;
-
+/* The new addition of three script operators for the corresponding operation processing. */
 const char* GetOpName(opcodetype opcode)
 {
     switch (opcode)
@@ -137,8 +137,8 @@ const char* GetOpName(opcodetype opcode)
     case OP_CLAIM_NAME             : return "OP_CLAIM_NAME";                                                                                                                                                                                                                  
     case OP_SUPPORT_CLAIM          : return "OP_SUPPORT_CLAIM";
     case OP_UPDATE_CLAIM           : return "OP_UPDATE_CLAIM";
-    case OP_NOP9                   : return "OP_NOP9";
-    case OP_NOP10                  : return "OP_NOP10";
+    case OP_NAME_TRIE              : return "OP_NAME_TRIE";
+    case OP_NAME_UPDATE            : return "OP_NAME_UPDATE";
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 
@@ -223,7 +223,38 @@ bool CScript::IsNormalPaymentScript() const
 
     return true;
 }
+// Determines whether the script is cross-linked
+bool CScript::IsCrossChainPaymentScript() const
+{
+    if(this->size() != 81) return false;
 
+    std::string str;
+    opcodetype opcode;
+    const_iterator pc = begin();
+    int i = 0;
+    while (pc < end())
+    {
+        GetOp(pc, opcode);
+
+		if( 	i == 0 && opcode != OP_IF) return false;
+		else if(i == 1 && opcode != OP_RIPEMD160) return false;
+		else if(i == 3 && opcode != OP_EQUALVERIFY) return false;
+		else if(i == 4 && opcode != OP_DUP) return false;
+		else if(i == 5 && opcode != OP_HASH160) return false;
+		else if(i == 7 && opcode != OP_ELSE) return false;
+		else if(i == 9 && opcode != OP_CHECKLOCKTIMEVERIFY) return false;
+		else if(i == 10 && opcode != OP_DROP) return false;
+		else if(i == 11 && opcode != OP_DUP) return false;
+		else if(i == 12 && opcode != OP_HASH160) return false;
+		else if(i == 14 && opcode != OP_ENDIF) return false;
+		else if(i == 15 && opcode != OP_EQUALVERIFY) return false;
+		else if(i == 16 && opcode != OP_CHECKSIG) return false;
+		else if(i == 17) return false;
+        i++;
+    }
+
+    return true;
+}
 bool CScript::IsPayToPublicKeyHash() const
 {
     // Extra-fast test for pay-to-pubkey-hash CScripts:

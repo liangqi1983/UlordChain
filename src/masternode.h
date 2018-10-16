@@ -10,6 +10,7 @@
 #include "net.h"
 #include "spork.h"
 #include "timedata.h"
+#include "base58.h"
 
 class CMasternode;
 class CMasternodeBroadcast;
@@ -31,15 +32,24 @@ class CMasternodePing
 {
 public:
     CTxIn vin;
+	CPubKey pubKeyMasternode;
     uint256 blockHash;
     int64_t sigTime; //mnb message times
+
+	int certifyVersion;    	
+	int64_t certifyPeriod;  //certificate available time
+	std::string certificate; //certificate֤
     std::vector<unsigned char> vchSig;
     //removed stop
 
     CMasternodePing() :
         vin(),
+		pubKeyMasternode(),
         blockHash(),
         sigTime(0),
+		certifyVersion(1),
+        certifyPeriod(0),
+        certificate(),
         vchSig()
         {}
 
@@ -50,8 +60,12 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(vin);
+		READWRITE(pubKeyMasternode);
         READWRITE(blockHash);
         READWRITE(sigTime);
+		READWRITE(certifyVersion);
+		READWRITE(certifyPeriod);
+		READWRITE(certificate);
         READWRITE(vchSig);
     }
 
@@ -63,8 +77,12 @@ public:
         // by swapping the members of two classes,
         // the two classes are effectively swapped
         swap(first.vin, second.vin);
+		swap(first.pubKeyMasternode, second.pubKeyMasternode);
         swap(first.blockHash, second.blockHash);
         swap(first.sigTime, second.sigTime);
+		swap(first.certifyVersion, second.certifyVersion);
+		swap(first.certifyPeriod, second.certifyPeriod);
+		swap(first.certificate, second.certificate);
         swap(first.vchSig, second.vchSig);
     }
 
@@ -132,7 +150,7 @@ struct masternode_info_t
 };
 
 //
-// The Masternode Class. For managing the Darksend process. It contains the input of the 10000 ULD, signature to prove
+// The Masternode Class. For managing the PrivSend process. It contains the input of the 10000 UT, signature to prove
 // it's the one who own that ip address and code for calculating the payment election.
 //
 class CMasternode
@@ -162,6 +180,10 @@ public:
     CPubKey pubKeyMasternode;
     CMasternodePing lastPing;
     std::vector<unsigned char> vchSig;
+	
+    int certifyVersion;
+	std::string certificate; //certificate֤
+	int64_t certifyPeriod;  //certificate available time
     int64_t sigTime; //mnb message time
     int64_t nLastDsq; //the dsq count from the last dsq broadcast of this node
     int64_t nTimeLastChecked;
@@ -176,6 +198,7 @@ public:
     int nPoSeBanHeight;
     bool fAllowMixingTx;
     bool fUnitTest;
+	CBitcoinAddress payeeAddress;
 
     // KEEP TRACK OF GOVERNANCE ITEMS EACH MASTERNODE HAS VOTE UPON FOR RECALCULATION
     std::map<uint256, int> mapGovernanceObjectsVotedOn;
@@ -196,6 +219,9 @@ public:
         READWRITE(pubKeyMasternode);
         READWRITE(lastPing);
         READWRITE(vchSig);
+        READWRITE(certifyVersion);
+	    READWRITE(certificate);
+	    READWRITE(certifyPeriod);
         READWRITE(sigTime);
         READWRITE(nLastDsq);
         READWRITE(nTimeLastChecked);
@@ -213,35 +239,7 @@ public:
         READWRITE(mapGovernanceObjectsVotedOn);
     }
 
-    void swap(CMasternode& first, CMasternode& second) // nothrow
-    {
-        // enable ADL (not necessary in our case, but good practice)
-        using std::swap;
-
-        // by swapping the members of two classes,
-        // the two classes are effectively swapped
-        swap(first.vin, second.vin);
-        swap(first.addr, second.addr);
-        swap(first.pubKeyCollateralAddress, second.pubKeyCollateralAddress);
-        swap(first.pubKeyMasternode, second.pubKeyMasternode);
-        swap(first.lastPing, second.lastPing);
-        swap(first.vchSig, second.vchSig);
-        swap(first.sigTime, second.sigTime);
-        swap(first.nLastDsq, second.nLastDsq);
-        swap(first.nTimeLastChecked, second.nTimeLastChecked);
-		swap(first.nTimeLastCheckedRegistered, second.nTimeLastCheckedRegistered);
-        swap(first.nTimeLastPaid, second.nTimeLastPaid);
-        swap(first.nTimeLastWatchdogVote, second.nTimeLastWatchdogVote);
-        swap(first.nActiveState, second.nActiveState);
-        swap(first.nCacheCollateralBlock, second.nCacheCollateralBlock);
-        swap(first.nBlockLastPaid, second.nBlockLastPaid);
-        swap(first.nProtocolVersion, second.nProtocolVersion);
-        swap(first.nPoSeBanScore, second.nPoSeBanScore);
-        swap(first.nPoSeBanHeight, second.nPoSeBanHeight);
-        swap(first.fAllowMixingTx, second.fAllowMixingTx);
-        swap(first.fUnitTest, second.fUnitTest);
-        swap(first.mapGovernanceObjectsVotedOn, second.mapGovernanceObjectsVotedOn);
-    }
+    void swap(CMasternode& first, CMasternode& second); // nothrow
 
     // CALCULATE A RANK AGAINST OF GIVEN BLOCK
     arith_uint256 CalculateScore(const uint256& blockHash);
@@ -324,6 +322,8 @@ public:
 
     void UpdateWatchdogVoteTime();
 
+	CTxDestination GetPayeeDestination();
+
     CMasternode& operator=(CMasternode from)
     {
         swap(*this, from);
@@ -365,6 +365,9 @@ public:
         READWRITE(pubKeyCollateralAddress);
         READWRITE(pubKeyMasternode);
         READWRITE(vchSig);
+        READWRITE(certifyVersion);
+		READWRITE(certificate);
+		READWRITE(certifyPeriod);
         READWRITE(sigTime);
         READWRITE(nProtocolVersion);
         READWRITE(lastPing);
@@ -391,16 +394,18 @@ public:
     }
 
     /// Create Masternode broadcast, needs to be relayed manually after that
-    static bool Create(CTxIn vin, CService service, CKey keyCollateralAddressNew, CPubKey pubKeyCollateralAddressNew, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string &strErrorRet, CMasternodeBroadcast &mnbRet);
+    static bool Create(CTxIn vin, CService service,  CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string &strErrorRet, CMasternodeBroadcast &mnbRet);
     static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorRet, CMasternodeBroadcast &mnbRet, bool fOffline = false);
 
     bool SimpleCheck(int& nDos);
     bool Update(CMasternode* pmn, int& nDos);
     bool CheckOutpoint(int& nDos);
 
-    bool Sign(CKey& keyCollateralAddress);
+    bool Sign();
     bool CheckSignature(int& nDos);
     void Relay();
+
+	bool getPubKeyId(CKeyID& pubKeyId);
 };
 
 class CMasternodeVerification

@@ -1,7 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2018 The Ulord Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -281,6 +281,7 @@ static const CRPCCommand vRPCCommands[] =
     { "blockchain",         "getblockchaininfo",      &getblockchaininfo,      true  },
     { "blockchain",         "getbestblockhash",       &getbestblockhash,       true  },
     { "blockchain",         "getblockcount",          &getblockcount,          true  },
+    { "blockchain",         "getsuperblock",          &getsuperblock,          true  },
     { "blockchain",         "getblock",               &getblock,               true  },
     { "blockchain",         "getblockhashes",         &getblockhashes,         true  },
     { "blockchain",         "getblockhash",           &getblockhash,           true  },
@@ -296,6 +297,7 @@ static const CRPCCommand vRPCCommands[] =
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        true  },
     { "blockchain",         "verifychain",            &verifychain,            true  },
     { "blockchain",         "getspentinfo",           &getspentinfo,           false },
+    { "blockchain",         "getcointip",              &getcointip,             false },
 
     /* Mining */
     { "mining",             "getblocktemplate",       &getblocktemplate,       true  },
@@ -339,7 +341,8 @@ static const CRPCCommand vRPCCommands[] =
     /* Not shown in help */
     { "hidden",             "invalidateblock",        &invalidateblock,        true  },
     { "hidden",             "reconsiderblock",        &reconsiderblock,        true  },
-    { "hidden",             "setmocktime",            &setmocktime,            true  },
+    { "hidden",             "uploadmessage",          &uploadmessage,          false },
+	{ "hidden",             "setmocktime",            &setmocktime,            true  },
 #ifdef ENABLE_WALLET
     { "hidden",             "resendwallettransactions", &resendwallettransactions, true},
 #endif
@@ -355,6 +358,7 @@ static const CRPCCommand vRPCCommands[] =
     { "ulord",               "mnsync",                 &mnsync,                 true  },
     { "ulord",               "spork",                  &spork,                  true  },
     { "ulord",               "getpoolinfo",            &getpoolinfo,            true  },
+    { "ulord",               "signmnpmessage",         &signmnpmessage,         true  },
 #ifdef ENABLE_WALLET
     { "ulord",               "privatesend",            &privatesend,            false },
 
@@ -396,7 +400,9 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "sendfrom",               &sendfrom,               false },
     { "wallet",             "sendmany",               &sendmany,               false },
     { "wallet",             "sendtoaddress",          &sendtoaddress,          false },
+	{ "wallet",             "sendalltoaddress",       &sendalltoaddress,       false },
     { "wallet",             "sendfromAtoB",           &sendfromAtoB,           false },
+	{ "wallet",             "sendallfromAtoB",        &sendallfromAtoB,        false },
     { "wallet",             "setaccount",             &setaccount,             true  },
     { "wallet",             "settxfee",               &settxfee,               true  },
     { "wallet",             "signmessage",            &signmessage,            true  },
@@ -405,22 +411,34 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "walletpassphrase",       &walletpassphrase,       true  },
 
 	/*claimtrie*/
-    { "Claimtrie",          "claimname",              &claimname,              true  },  
-    { "Claimtrie",          "updateclaim",            &updateclaim,            true  },  
-    { "Claimtrie",          "abandonclaim",           &abandonclaim,           true  },  
-    { "Claimtrie",          "listnameclaims",         &listnameclaims,         true  },  
-    { "Claimtrie",          "supportclaim",           &supportclaim,           true  },  
-    { "Claimtrie",          "abandonsupport",         &abandonsupport,         true  },  
-    { "Claimtrie",          "getclaimsintrie",        &getclaimsintrie,        true  },  
-    { "Claimtrie",          "getclaimtrie",           &getclaimtrie,           true  },  
-    { "Claimtrie",          "getvalueforname",        &getvalueforname,        true  },  
-    { "Claimtrie",          "getclaimsforname",       &getclaimsforname,       true  },  
-    { "Claimtrie",          "gettotalclaimednames",   &gettotalclaimednames,   true  },  
-    { "Claimtrie",          "gettotalclaims",         &gettotalclaims,         true  },  
-    { "Claimtrie",          "gettotalvalueofclaims",  &gettotalvalueofclaims,  true  },  
-    { "Claimtrie",          "getclaimsfortx",         &getclaimsfortx,         true  },  
-    { "Claimtrie",          "getnameproof",           &getnameproof,           true  },  
-    { "Claimtrie",          "getclaimbyid",           &getclaimbyid,           true  },
+    { "hidden",          "claimname",                 &claimname,              true  },  
+    { "hidden",          "updateclaim",            	  &updateclaim,            true  },  
+    { "hidden",          "abandonclaim",              &abandonclaim,           true  },  
+    { "hidden",          "listnameclaims",            &listnameclaims,         true  },  
+    { "hidden",          "supportclaim",              &supportclaim,           true  },  
+    { "hidden",          "abandonsupport",            &abandonsupport,         true  },  
+    { "hidden",          "getclaimsintrie",           &getclaimsintrie,        true  },  
+    { "hidden",          "getclaimtrie",              &getclaimtrie,           true  },  
+    { "hidden",          "getvalueforname",           &getvalueforname,        true  },  
+    { "hidden",          "getclaimsforname",          &getclaimsforname,       true  },  
+    { "hidden",          "gettotalclaimednames",      &gettotalclaimednames,   true  },  
+    { "hidden",          "gettotalclaims",            &gettotalclaims,         true  },  
+    { "hidden",          "gettotalvalueofclaims",     &gettotalvalueofclaims,  true  },  
+    { "hidden",          "getclaimsfortx",            &getclaimsfortx,         true  },  
+    { "hidden",          "getnameproof",              &getnameproof,           true  },  
+    { "hidden",          "getclaimbyid",              &getclaimbyid,           true  },
+    { "hidden",          "sendtoaccountname",         &sendtoaccountname,      true  },
+    { "hidden",          "getaccountnamefromaddress", &getaccountnamefromaddress,true  },
+    /* atomic swap contract of transaction about RPC */
+    { "hidden",	         "crosschaininitial",         &crosschaininitial,      true  },
+    { "hidden",          "crosschainparticipate",     &crosschainparticipate,  true  },
+    { "hidden",          "crosschainredeem",          &crosschainredeem,       true  },
+    { "hidden",          "crosschainrefund",          &crosschainrefund,       true  },
+    { "hidden",          "crosschainextractsecret",   &crosschainextractsecret,true  },
+    { "hidden",          "crosschainauditcontract",   &crosschainauditcontract,true  },
+    
+	{ "hidden", 		 "lockcoin",       &lockcoin,     true  },
+	{ "hidden", 		 "unlockcoin",      	  &unlockcoin,          true  },
 #endif // ENABLE_WALLET
 };
 

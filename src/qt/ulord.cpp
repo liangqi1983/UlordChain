@@ -1,8 +1,10 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2016-2018 The Ulord Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+/*the main cycle of the Ulord*/
 #if defined(HAVE_CONFIG_H)
 #include "config/ulord-config.h"
 #endif
@@ -661,7 +663,7 @@ int main(int argc, char *argv[])
     initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
 
 #ifdef ENABLE_WALLET
-    /// 7a. parse masternode.conf
+    /// 7a. parse masternode Configure
     std::string strErr;
     if(!masternodeConfig.read(strErr)) {
         QMessageBox::critical(0, QObject::tr("Ulord Core"),

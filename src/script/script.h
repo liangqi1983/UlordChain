@@ -38,6 +38,7 @@ std::vector<unsigned char> ToByteVector(const T& in)
 }
 
 /** Script opcodes */
+/*To support the claim operation, three script operators were added. OP_CLAIM_NAME OP_UPDATE_CLAIM OP_SUPPORT_CLAIM */
 enum opcodetype
 {
     // push value
@@ -176,7 +177,8 @@ enum opcodetype
     OP_UPDATE_CLAIM = OP_NOP8,
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
-
+    OP_NAME_TRIE = OP_NOP9,
+    OP_NAME_UPDATE = OP_NOP10,
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -621,6 +623,7 @@ public:
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
     bool IsNormalPaymentScript() const;
+	bool IsCrossChainPaymentScript()const;
     bool IsPayToPublicKeyHash() const;
 
     bool IsPayToScriptHash() const;

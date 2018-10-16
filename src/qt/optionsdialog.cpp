@@ -21,7 +21,7 @@
 #include "wallet/wallet.h" // for CWallet::GetRequiredFee()
 #endif
 
-#include "darksend.h"
+#include "privsend.h"
 
 #include <boost/thread.hpp>
 
@@ -41,6 +41,7 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     mapper(0)
 {
     ui->setupUi(this);
+    this->setWindowFlags(Qt::Dialog|Qt::WindowCloseButtonHint);
 
     /* Main elements init */
     ui->databaseCache->setMinimum(nMinDbCache);
@@ -266,7 +267,7 @@ void OptionsDialog::on_resetButton_clicked()
 void OptionsDialog::on_okButton_clicked()
 {
     mapper->submit();
-    darkSendPool.nCachedNumBlocks = std::numeric_limits<int>::max();
+    privSendPool.nCachedNumBlocks = std::numeric_limits<int>::max();
     pwalletMain->MarkDirty();
     accept();
     updateDefaultProxyNets();

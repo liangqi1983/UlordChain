@@ -642,7 +642,7 @@
     </message>
 </context>
 <context>
-    <name>DarksendConfig</name>
+    <name>PrivsendConfig</name>
     </context>
 <context>
     <name>EditAddressDialog</name>
@@ -3048,7 +3048,7 @@
         <translation>このヘルプ メッセージ</translation>
     </message>
     <message>
-        <source>This is experimental software.</source>
+        <source>This is Ulord full-node wallet client</source>
         <translation>これは実験的なソフトウェアです。</translation>
     </message>
     <message>

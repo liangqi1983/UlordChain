@@ -23,7 +23,7 @@
 #include "wallet/walletdb.h"
 #endif
 
-#include "darksend.h"
+#include "privsend.h"
 #ifdef ENABLE_WALLET
 #include "masternodeconfig.h"
 #endif
@@ -69,7 +69,7 @@ void OptionsModel::Init(bool resetSettings)
 
     // Display
     if (!settings.contains("nDisplayUnit"))
-        settings.setValue("nDisplayUnit", BitcoinUnits::ULD);
+        settings.setValue("nDisplayUnit", BitcoinUnits::UT);
     nDisplayUnit = settings.value("nDisplayUnit").toInt();
 
     if (!settings.contains("strThirdPartyTxUrls"))
@@ -81,7 +81,7 @@ void OptionsModel::Init(bool resetSettings)
     fCoinControlFeatures = settings.value("fCoinControlFeatures", false).toBool();
 
     if (!settings.contains("digits"))
-        settings.setValue("digits", "2");
+        settings.setValue("digits", "6");
     if (!settings.contains("theme"))
         settings.setValue("theme", "");
 

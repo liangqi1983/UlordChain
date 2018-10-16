@@ -124,7 +124,8 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
 
     GUIUtil::restoreWindowGeometry("nWindow", QSize(850, 550), this);
 
-    QString windowTitle = tr("Ulord Core") + " - ";
+    // QString windowTitle = tr("Ulord Core") + " - ";
+    QString windowTitle = tr("Ulord Core");
 #ifdef ENABLE_WALLET
     /* if compiled with wallet support, -disablewallet can still disable the wallet */
     enableWallet = !GetBoolArg("-disablewallet", false);
@@ -133,9 +134,9 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
 #endif // ENABLE_WALLET
     if(enableWallet)
     {
-        windowTitle += tr("Wallet");
+        // windowTitle += tr("Wallet");
     } else {
-        windowTitle += tr("Node");
+        // windowTitle += tr("Node");
     }
     QString userWindowTitle = QString::fromStdString(GetArg("-windowtitle", ""));
     if(!userWindowTitle.isEmpty()) windowTitle += " - " + userWindowTitle;
@@ -198,13 +199,15 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
     frameBlocks->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     QHBoxLayout *frameBlocksLayout = new QHBoxLayout(frameBlocks);
     frameBlocksLayout->setContentsMargins(3,0,3,0);
-    frameBlocksLayout->setSpacing(3);
+    frameBlocksLayout->setSpacing(20);
     unitDisplayControl = new UnitDisplayStatusBarControl(platformStyle);
     labelEncryptionIcon = new QLabel();
     labelConnectionsIcon = new QPushButton();
     labelConnectionsIcon->setFlat(true); // Make the button look like a label, but clickable
     labelConnectionsIcon->setStyleSheet(".QPushButton { background-color: rgba(255, 255, 255, 0);}");
-    labelConnectionsIcon->setMaximumSize(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE);
+    labelConnectionsIcon->setMaximumSize(STATUSBAR_ICONSIZE+4, STATUSBAR_ICONSIZE);
+    labelSpace =  new QLabel();
+    labelSpace->setText(" ");
     // Jump to peers tab by clicking on connections icon
     connect(labelConnectionsIcon, SIGNAL(clicked()), this, SLOT(showPeers()));
 
@@ -221,6 +224,8 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelBlocksIcon);
     frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelSpace);
+    frameBlocksLayout->addStretch();
 
     // Progress bar and label for blocks download
     progressBarLabel = new QLabel();
@@ -236,12 +241,13 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
     // QString curStyle = QApplication::style()->metaObject()->className();
     // if(curStyle == "QWindowsStyle" || curStyle == "QWindowsXPStyle")
     // {
-        progressBar->setStyleSheet("QProgressBar { background-color: #F8F8F8; border: 1px solid grey; border-radius: 12px; padding: 1px; color:#ffffff; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #40a5f5, stop: 1 #40a5f5); border-radius: 10px; margin: 0px; }");
+        progressBar->setStyleSheet("QProgressBar { margin-left: 10px; background-color: #999; border: 0px solid white; border-radius: 12px; padding: 1px; color:#ffffff; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #515B78, stop: 1 #515B78); border-radius: 10px; margin: 0px; }");
     // }
 
     statusBar()->addWidget(progressBarLabel);
     statusBar()->addWidget(progressBar);
     statusBar()->addPermanentWidget(frameBlocks);
+    statusBar()->setStyleSheet(QString("QStatusBar::item{border: 0px}"));
 
     // Install event filter to be able to catch status tip events (QEvent::StatusTip)
     this->installEventFilter(this);
@@ -359,54 +365,54 @@ void BitcoinGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
 #endif // ENABLE_WALLET
 
-    quitAction = new QAction(QIcon(":/icons/" + theme + "/quit"), tr("E&xit"), this);
+    quitAction = new QAction(/*QIcon(":/icons/" + theme + "/quit"), */tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     quitAction->setMenuRole(QAction::QuitRole);
-    aboutAction = new QAction(QIcon(":/icons/" + theme + "/about"), tr("&About Ulord Core"), this);
+    aboutAction = new QAction(/*QIcon(":/icons/" + theme + "/about"),*/ tr("&About Ulord Core"), this);
     aboutAction->setStatusTip(tr("Show information about Ulord Core"));
     aboutAction->setMenuRole(QAction::AboutRole);
     aboutAction->setEnabled(false);
-    aboutQtAction = new QAction(QIcon(":/icons/" + theme + "/about_qt"), tr("About &Qt"), this);
+    aboutQtAction = new QAction(/*QIcon(":/icons/" + theme + "/about_qt"),*/ tr("About &Qt"), this);
     aboutQtAction->setStatusTip(tr("Show information about Qt"));
     aboutQtAction->setMenuRole(QAction::AboutQtRole);
-    optionsAction = new QAction(QIcon(":/icons/" + theme + "/options"), tr("&Options..."), this);
+    optionsAction = new QAction(/*QIcon(":/icons/" + theme + "/options"), */tr("&Options..."), this);
     optionsAction->setStatusTip(tr("Modify configuration options for Ulord Core"));
     optionsAction->setMenuRole(QAction::PreferencesRole);
     optionsAction->setEnabled(false);
-    toggleHideAction = new QAction(QIcon(":/icons/" + theme + "/about"), tr("&Show / Hide"), this);
+    toggleHideAction = new QAction(/*QIcon(":/icons/" + theme + "/about"), */tr("&Show / Hide"), this);
     toggleHideAction->setStatusTip(tr("Show or hide the main Window"));
 
-    encryptWalletAction = new QAction(QIcon(":/icons/" + theme + "/lock_closed"), tr("&Encrypt Wallet..."), this);
+    encryptWalletAction = new QAction(/*QIcon(":/icons/" + theme + "/lock_closed"),*/ tr("&Encrypt Wallet..."), this);
     encryptWalletAction->setStatusTip(tr("Encrypt the private keys that belong to your wallet"));
     encryptWalletAction->setCheckable(true);
-    backupWalletAction = new QAction(QIcon(":/icons/" + theme + "/filesave"), tr("&Backup Wallet..."), this);
+    backupWalletAction = new QAction(/*QIcon(":/icons/" + theme + "/filesave"),*/ tr("&Backup Wallet..."), this);
     backupWalletAction->setStatusTip(tr("Backup wallet to another location"));
-    changePassphraseAction = new QAction(QIcon(":/icons/" + theme + "/key"), tr("&Change Passphrase..."), this);
+    changePassphraseAction = new QAction(/*QIcon(":/icons/" + theme + "/key"),*/ tr("&Change Passphrase..."), this);
     changePassphraseAction->setStatusTip(tr("Change the passphrase used for wallet encryption"));
     unlockWalletAction = new QAction(tr("&Unlock Wallet..."), this);
     unlockWalletAction->setToolTip(tr("Unlock wallet"));
     lockWalletAction = new QAction(tr("&Lock Wallet"), this);
-    signMessageAction = new QAction(QIcon(":/icons/" + theme + "/edit"), tr("Sign &message..."), this);
+    signMessageAction = new QAction(/*QIcon(":/icons/" + theme + "/edit"),*/ tr("Sign &message..."), this);
     signMessageAction->setStatusTip(tr("Sign messages with your Ulord addresses to prove you own them"));
-    verifyMessageAction = new QAction(QIcon(":/icons/" + theme + "/transaction_0"), tr("&Verify message..."), this);
+    verifyMessageAction = new QAction(/*QIcon(":/icons/" + theme + "/transaction_0"), */tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified Ulord addresses"));
 
-    openInfoAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Information"), this);
+    openInfoAction = new QAction(/*QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation),*/ tr("&Information"), this);
     openInfoAction->setStatusTip(tr("Show diagnostic information"));
-    openRPCConsoleAction = new QAction(QIcon(":/icons/" + theme + "/debugwindow"), tr("&Debug console"), this);
+    openRPCConsoleAction = new QAction(/*QIcon(":/icons/" + theme + "/debugwindow"),*/ tr("&Debug console"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging console"));
-    openGraphAction = new QAction(QIcon(":/icons/" + theme + "/connect_4"), tr("&Network Monitor"), this);
+    openGraphAction = new QAction(/*QIcon(":/icons/" + theme + "/connect_4"), */tr("&Network Monitor"), this);
     openGraphAction->setStatusTip(tr("Show network monitor"));
-    openPeersAction = new QAction(QIcon(":/icons/" + theme + "/connect_4"), tr("&Peers list"), this);
+    openPeersAction = new QAction(/*QIcon(":/icons/" + theme + "/connect_4"), */tr("&Peers list"), this);
     openPeersAction->setStatusTip(tr("Show peers info"));
-    openRepairAction = new QAction(QIcon(":/icons/" + theme + "/options"), tr("Wallet &Repair"), this);
+    openRepairAction = new QAction(/*QIcon(":/icons/" + theme + "/options"), */tr("Wallet &Repair"), this);
     openRepairAction->setStatusTip(tr("Show wallet repair options"));
-    openConfEditorAction = new QAction(QIcon(":/icons/" + theme + "/edit"), tr("Open Wallet &Configuration File"), this);
+    openConfEditorAction = new QAction(/*QIcon(":/icons/" + theme + "/edit"), */tr("Open Wallet &Configuration File"), this);
     openConfEditorAction->setStatusTip(tr("Open configuration file"));
-    openMNConfEditorAction = new QAction(QIcon(":/icons/" + theme + "/edit"), tr("Open &Masternode Configuration File"), this);
-    openMNConfEditorAction->setStatusTip(tr("Open Masternode configuration file"));    
-    showBackupsAction = new QAction(QIcon(":/icons/" + theme + "/browse"), tr("Show Automatic &Backups"), this);
+
+
+    showBackupsAction = new QAction(/*QIcon(":/icons/" + theme + "/browse"),*/ tr("Show Automatic &Backups"), this);
     showBackupsAction->setStatusTip(tr("Show automatically created wallet backups"));
     // initially disable the debug window menu items
     openInfoAction->setEnabled(false);
@@ -415,17 +421,17 @@ void BitcoinGUI::createActions()
     openPeersAction->setEnabled(false);
     openRepairAction->setEnabled(false);
 
-    usedSendingAddressesAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("&Sending addresses..."), this);
+    usedSendingAddressesAction = new QAction(/*QIcon(":/icons/" + theme + "/address-book"),*/ tr("&Sending addresses..."), this);
     usedSendingAddressesAction->setStatusTip(tr("Show the list of used sending addresses and labels"));
-    usedReceivingAddressesAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("&Receiving addresses..."), this);
+    usedReceivingAddressesAction = new QAction(/*QIcon(":/icons/" + theme + "/address-book"),*/ tr("&Receiving addresses..."), this);
     usedReceivingAddressesAction->setStatusTip(tr("Show the list of used receiving addresses and labels"));
 
-    openAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_DirOpenIcon), tr("Open &URI..."), this);
-    openAction->setStatusTip(tr("Open a ulord: URI or payment request"));
+    openAction = new QAction(/*QApplication::style()->standardIcon(QStyle::SP_DirOpenIcon), */ tr("Open &URI..."), this);
+    openAction->setStatusTip(tr("Open a Ulord: URI or payment request"));
 
-    showHelpMessageAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Command-line options"), this);
+    showHelpMessageAction = new QAction(/*QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), */ tr("&Command-line options"), this);
     showHelpMessageAction->setMenuRole(QAction::NoRole);
-    showHelpMessageAction->setStatusTip(tr("Show the Ulord Core help message to get a list with possible Ulord Core command-line options"));
+    // showHelpMessageAction->setStatusTip(tr("Show the Ulord Core help message to get a list with possible Ulord Core command-line options"));
 
     showPrivateSendHelpAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&PrivateSend information"), this);
     showPrivateSendHelpAction->setMenuRole(QAction::NoRole);
@@ -448,7 +454,7 @@ void BitcoinGUI::createActions()
 
     // Open configs and backup folder from menu
     connect(openConfEditorAction, SIGNAL(triggered()), this, SLOT(showConfEditor()));
-    connect(openMNConfEditorAction, SIGNAL(triggered()), this, SLOT(showMNConfEditor()));
+
     connect(showBackupsAction, SIGNAL(triggered()), this, SLOT(showBackups()));
 
     // Get restart command-line parameters and handle restart
@@ -526,7 +532,7 @@ void BitcoinGUI::createMenuBar()
         tools->addAction(openRepairAction);
         tools->addSeparator();
         tools->addAction(openConfEditorAction);
-        tools->addAction(openMNConfEditorAction);
+
         tools->addAction(showBackupsAction);
     }
 
@@ -535,7 +541,7 @@ void BitcoinGUI::createMenuBar()
     // help->addAction(showPrivateSendHelpAction);
     help->addSeparator();
     help->addAction(aboutAction);
-    help->addAction(aboutQtAction);
+    // help->addAction(aboutQtAction);
 }
 
 void BitcoinGUI::createToolBars()
@@ -716,7 +722,7 @@ void BitcoinGUI::createIconMenu(QMenu *pmenu)
     pmenu->addAction(openRepairAction);
     pmenu->addSeparator();
     pmenu->addAction(openConfEditorAction);
-    pmenu->addAction(openMNConfEditorAction);
+
     pmenu->addAction(showBackupsAction);
 #ifndef Q_OS_MAC // This is built-in on Mac
     pmenu->addSeparator();
@@ -795,11 +801,6 @@ void BitcoinGUI::showRepair()
 void BitcoinGUI::showConfEditor()
 {
     GUIUtil::openConfigfile();
-}
-
-void BitcoinGUI::showMNConfEditor()
-{
-    GUIUtil::openMNConfigfile();
 }
 
 void BitcoinGUI::showBackups()
@@ -887,7 +888,7 @@ void BitcoinGUI::setNumConnections(int count)
     case 7: case 8: case 9: icon = ":/icons/" + theme + "/connect_3"; break;
     default: icon = ":/icons/" + theme + "/connect_4"; break;
     }
-    QIcon connectionItem = QIcon(icon).pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE);
+    QIcon connectionItem = QIcon(icon).pixmap(STATUSBAR_ICONSIZE+4,STATUSBAR_ICONSIZE);
     labelConnectionsIcon->setIcon(connectionItem);
     labelConnectionsIcon->setToolTip(tr("%n active connection(s) to Ulord network", "", count));
 }
@@ -1093,6 +1094,11 @@ void BitcoinGUI::message(const QString &title, const QString &message, unsigned 
 
         showNormalIfMinimized();
         QMessageBox mBox((QMessageBox::Icon)nMBoxIcon, strTitle, message, buttons, this);
+        if(NULL!=mBox.button(QMessageBox::Ok))
+        {
+           mBox.button(QMessageBox::Ok)->setText(tr("Ok"));
+           // mBox.button(QMessageBox::Ok)->setStyleSheet("background-color:#515b78;border:0;border-radius:3px;color:#ffffff;font-size:12px;font-weight:normal;height: 26px;padding-left:25px;padding-right:25px;padding-top:5px;padding-bottom:5px;margin-right: 10px;");
+        }
         int r = mBox.exec();
         if (ret != NULL)
             *ret = r == QMessageBox::Ok;
@@ -1360,7 +1366,7 @@ UnitDisplayStatusBarControl::UnitDisplayStatusBarControl(const PlatformStyle *pl
     menu(0)
 {
     createContextMenu();
-    setToolTip(tr("Unit to show amounts in. Click to select another unit."));
+    // setToolTip(tr("Unit to show amounts in. Click to select another unit."));
     QList<BitcoinUnits::Unit> units = BitcoinUnits::availableUnits();
     int max_width = 0;
     const QFontMetrics fm(font());
@@ -1370,7 +1376,7 @@ UnitDisplayStatusBarControl::UnitDisplayStatusBarControl(const PlatformStyle *pl
     }
     setMinimumSize(max_width, 0);
     setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    setStyleSheet(QString("QLabel { color : %1 }").arg(platformStyle->SingleColor().name()));
+    setStyleSheet(QString("QLabel { color : #515B78}"));
 }
 
 /** So that it responds to button clicks */

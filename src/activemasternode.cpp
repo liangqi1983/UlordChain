@@ -7,8 +7,9 @@
 #include "masternode-sync.h"
 #include "masternodeman.h"
 #include "protocol.h"
+#include "masternodeconfig.h"
 
-extern CWallet* pwalletMain;
+
 
 // Keep track of the active Masternode
 CActiveMasternode activeMasternode;
@@ -42,8 +43,10 @@ void CActiveMasternode::ManageState()
     } else if(eType == MASTERNODE_LOCAL) {
         // Try Remote Start first so the started local masternode can be restarted without recreate masternode broadcast.
         ManageStateRemote();
+#ifdef ENABLE_WALLET
         if(nState != ACTIVE_MASTERNODE_STARTED)
             ManageStateLocal();
+#endif // ENABLE_WALLET
     }
 
     SendMasternodePing();
@@ -101,8 +104,10 @@ bool CActiveMasternode::SendMasternodePing()
     }
 
     if(!mnodeman.Has(vin)) {
-        strNotCapableReason = "Masternode not in masternode list";
-        nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
+        if(nState != ACTIVE_MASTERNODE_NOT_CAPABLE) {
+            strNotCapableReason = "Masternode not in masternode list";
+            nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
+        }
         LogPrintf("CActiveMasternode::SendMasternodePing -- %s: %s\n", GetStateString(), strNotCapableReason);
         return false;
     }
@@ -121,7 +126,7 @@ bool CActiveMasternode::SendMasternodePing()
 
     mnodeman.SetMasternodeLastPing(vin, mnp);
 
-    LogPrintf("CActiveMasternode::SendMasternodePing -- Relaying ping, collateral=%s\n", vin.ToString());
+    LogPrintf("CActiveMasternode::SendMasternodePing -- Relaying ping(%ld-%d), collateral=%s\n", mnp.certifyPeriod, mnp.certifyVersion, vin.ToString());
     mnp.Relay();
 
     return true;
@@ -149,7 +154,6 @@ void CActiveMasternode::ManageStateInitial()
         if(!fFoundLocal) {
             // nothing and no live connections, can't do anything for now
             if (vNodes.empty()) {
-//LogPrintf("empty1234123412342134\n");                
 				nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
                 strNotCapableReason = "Can't detect valid external address. Will retry when there are some connections available.";
                 LogPrintf("CActiveMasternode::ManageStateInitial -- %s: %s\n", GetStateString(), strNotCapableReason);
@@ -157,10 +161,10 @@ void CActiveMasternode::ManageStateInitial()
             }
             // We have some peers, let's try to find our local address from one of them
             BOOST_FOREACH(CNode* pnode, vNodes) {
-LogPrintf("fSuccessfullyConnected = %c, addr.IsIPv4 = %c\n", pnode->fSuccessfullyConnected ? 'y' : 'n', pnode->addr.IsIPv4() ? 'y' : 'n' );            
+                LogPrintf("fSuccessfullyConnected = %c, addr.IsIPv4 = %c\n", pnode->fSuccessfullyConnected ? 'y' : 'n', pnode->addr.IsIPv4() ? 'y' : 'n' );            
 			    if (pnode->fSuccessfullyConnected && pnode->addr.IsIPv4()) {
                     fFoundLocal = GetLocal(service, &pnode->addr) && CMasternode::IsValidNetAddr(service);
-LogPrintf("GetLocal() = %c, IsValidNetAddr = %c \n", GetLocal(service, &pnode->addr), CMasternode::IsValidNetAddr(service));
+                    LogPrintf("GetLocal() = %c, IsValidNetAddr = %c \n", GetLocal(service, &pnode->addr), CMasternode::IsValidNetAddr(service));
                     if(fFoundLocal) break;
                 }
             }
@@ -168,7 +172,6 @@ LogPrintf("GetLocal() = %c, IsValidNetAddr = %c \n", GetLocal(service, &pnode->a
     }
 
     if(!fFoundLocal) {
-//LogPrintf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n");
         nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
         strNotCapableReason = "Can't detect valid external address. Please consider using the externalip configuration option if problem persists. Make sure to use IPv4 address only.";
         LogPrintf("CActiveMasternode::ManageStateInitial -- %s: %s\n", GetStateString(), strNotCapableReason);
@@ -202,31 +205,10 @@ LogPrintf("GetLocal() = %c, IsValidNetAddr = %c \n", GetLocal(service, &pnode->a
     // Default to REMOTE
     eType = MASTERNODE_REMOTE;
 
-    const CAmount ct = Params().GetConsensus().colleteral;
-    // Check if wallet funds are available
-    if(!pwalletMain) {
-        LogPrintf("CActiveMasternode::ManageStateInitial -- %s: Wallet not available\n", GetStateString());
-        return;
-    }
-
-    if(pwalletMain->IsLocked()) {
-        LogPrintf("CActiveMasternode::ManageStateInitial -- %s: Wallet is locked\n", GetStateString());
-        return;
-    }
-
-    if(pwalletMain->GetBalance() < ct) {
-        LogPrintf("CActiveMasternode::ManageStateInitial -- %s: Wallet balance is < %lld ULD\n", GetStateString(), ct);
-        return;
-    }
-
-    // Choose coins to use
-    CPubKey pubKeyCollateral;
-    CKey keyCollateral;
-
-    // If collateral is found switch to LOCAL mode
-    if(pwalletMain->GetMasternodeVinAndKeys(vin, pubKeyCollateral, keyCollateral)) {
-        eType = MASTERNODE_LOCAL;
-    }
+	if(masternodeConfig.GetMasternodeVin(vin))
+	{
+		eType = MASTERNODE_LOCAL;
+	}
 
     LogPrint("masternode", "CActiveMasternode::ManageStateInitial -- End status = %s, type = %s, pinger enabled = %d\n", GetStatus(), GetTypeString(), fPingerEnabled);
 }
@@ -251,6 +233,12 @@ void CActiveMasternode::ManageStateRemote()
             LogPrintf("CActiveMasternode::ManageStateRemote -- %s: %s\n", GetStateString(), strNotCapableReason);
             return;
         }
+        if(vin != infoMn.vin) {
+            nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
+            strNotCapableReason = "Specified collateraloutputtxid doesn't match our external vin.";
+            LogPrintf("CActiveMasternode::ManageStateRemote -- %s: %s\n", GetStateString(), strNotCapableReason);
+            return;
+        }
         if(!CMasternode::IsValidStateForAutoStart(infoMn.nActiveState)) {
             nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
             strNotCapableReason = strprintf("Masternode in %s state", CMasternode::StateToString(infoMn.nActiveState));
@@ -272,6 +260,7 @@ void CActiveMasternode::ManageStateRemote()
     }
 }
 
+
 void CActiveMasternode::ManageStateLocal()
 {
     LogPrint("masternode", "CActiveMasternode::ManageStateLocal -- status = %s, type = %s, pinger enabled = %d\n", GetStatus(), GetTypeString(), fPingerEnabled);
@@ -280,10 +269,8 @@ void CActiveMasternode::ManageStateLocal()
     }
 
     // Choose coins to use
-    CPubKey pubKeyCollateral;
-    CKey keyCollateral;
 
-    if(pwalletMain->GetMasternodeVinAndKeys(vin, pubKeyCollateral, keyCollateral)) {
+    if(masternodeConfig.GetMasternodeVin(vin)) {
         int nInputAge = GetInputAge(vin);
         if(nInputAge < Params().GetConsensus().nMasternodeMinimumConfirmations){
             nState = ACTIVE_MASTERNODE_INPUT_TOO_NEW;
@@ -292,30 +279,35 @@ void CActiveMasternode::ManageStateLocal()
             return;
         }
 
-        {
-            LOCK(pwalletMain->cs_wallet);
-            pwalletMain->LockCoin(vin.prevout);
-        }
-
         CMasternodeBroadcast mnb;
         std::string strError;
-        if(!CMasternodeBroadcast::Create(vin, service, keyCollateral, pubKeyCollateral, keyMasternode, pubKeyMasternode, strError, mnb)) {
+        if(!CMasternodeBroadcast::Create(vin, service,  keyMasternode, pubKeyMasternode, strError, mnb)) {
             nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
             strNotCapableReason = "Error creating mastenode broadcast: " + strError;
             LogPrintf("CActiveMasternode::ManageStateLocal -- %s: %s\n", GetStateString(), strNotCapableReason);
             return;
         }
 
-		// check if it is registered on the Ulord center server
-		CMasternode mn(mnb);
-		if(!mnodeman.CheckActiveMaster(mn))
-		{
-			nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
-			strNotCapableReason = strprintf(_("%s didn't registered on Ulord Center"), mn.vin.prevout.ToStringShort());
-			LogPrintf("CMasternodeBroadcast::ManageStateLocal -- Didn't registered on Ulord Center, masternode=%s\n", mn.vin.prevout.ToStringShort());
-			return;
-		}
+        if(!CBitcoinAddress().Set(mnb.GetPayeeDestination())) {
+            nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
+            strNotCapableReason = "Error Collateral transaction without change address, can't design a payee address!";
+            LogPrintf("CActiveMasternode::ManageStateLocal -- %s: %s\n", GetStateString(), strNotCapableReason);
+            return;
+        }
 
+        // check if it is registered on the Ulord center server
+        //CMasternode mn(mnb);
+        if(!mnodecenter.LoadLicense(mnb))
+        {
+            nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
+            strNotCapableReason = strprintf(_("%s didn't registered on Ulord Center"), mnb.vin.prevout.ToStringShort());
+            LogPrintf("CActiveMasternode::ManageStateLocal -- Didn't registered on Ulord Center, masternode=%s\n", mnb.vin.prevout.ToStringShort());
+            return;
+        }
+        //mnb.certifyPeriod = mn.certifyPeriod;
+        //mnb.certificate = mn.certificate;
+        LogPrintf("CActiveMasternode::ManageStateLocal -- Load License(%ld-%d)\n", mnb.certifyPeriod, mnb.certifyVersion);
+		
         fPingerEnabled = true;
         nState = ACTIVE_MASTERNODE_STARTED;
 
@@ -329,3 +321,4 @@ void CActiveMasternode::ManageStateLocal()
         mnb.Relay();
     }
 }
+

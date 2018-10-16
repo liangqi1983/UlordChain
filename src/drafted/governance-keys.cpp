@@ -13,10 +13,10 @@
 // #include <univalue.h>
 // #include "support/allocators/secure.h"
 // #include ""
-
+// update version  is planed
 // vector<CGovernanceKey> vGovernanceKeys;
 // CCriticalSection cs_vGovernanceKeys;
-
+//user manager  governace  key , for find and check
 // bool CGovernanceKeyManager::InitGovernanceKeys(std::string strError)
 // {
 

@@ -43,6 +43,8 @@ share/qt/Info.plist
 
 src/univalue/gen
 
+src/obj/
+
 src/qt/*.moc
 src/qt/moc_*.cpp
 src/qt/forms/ui_*.h
@@ -136,3 +138,9 @@ ulord-cli
 ulordd
 ulord-qt
 make
+
+#source insight dir
+si/
+
+#vscode
+.vscode/

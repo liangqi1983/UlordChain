@@ -1,9 +1,9 @@
-// Copyright (c) 2016-2018 The Ulord Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CLAIMTRIE_H
-#define BITCOIN_CLAIMTRIE_H
+#ifndef ULORD_CLAIMTRIE_H
+#define ULORD_CLAIMTRIE_H
 
 #include "amount.h"
 #include "serialize.h"
@@ -14,6 +14,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 // leveldb keys
 #define HASH_BLOCK 'h'
@@ -38,15 +39,20 @@ public:
     CAmount nEffectiveAmount;
     int nHeight;
     int nValidAtHeight;
-
+	std::string saddr;
+	std::string sname;
+	std::map<std::string,std::string>m_NameAddress;
     CClaimValue() {};
 
     CClaimValue(COutPoint outPoint, uint160 claimId, CAmount nAmount, int nHeight,
-                int nValidAtHeight)
+                int nValidAtHeight,std::string addr,std::string name)
                 : outPoint(outPoint), claimId(claimId)
                 , nAmount(nAmount), nEffectiveAmount(nAmount)
                 , nHeight(nHeight), nValidAtHeight(nValidAtHeight)
-    {}
+                , saddr(addr),sname(name)
+    {
+		m_NameAddress[sname]=saddr;
+	}
 
     ADD_SERIALIZE_METHODS;
 
@@ -338,14 +344,15 @@ public:
     
     friend class CClaimTrieCache;
     
+    // leveldb 
     CDBWrapper db;
     int nCurrentHeight;
     int nExpirationTime;
     int nProportionalDelayFactor;
+    const CClaimTrieNode* getNodeForName(const std::string& name) const;
 private:
     void clear(CClaimTrieNode* current);
 
-    const CClaimTrieNode* getNodeForName(const std::string& name) const;
     
     bool update(nodeCacheType& cache, hashMapType& hashes,
                 std::map<std::string, int>& takeoverHeights,
@@ -453,14 +460,14 @@ public:
     bool dirty() const { return !dirtyHashes.empty(); }
     
     bool addClaim(const std::string& name, const COutPoint& outPoint,
-                  uint160 claimId, CAmount nAmount, int nHeight) const;
+                  uint160 claimId, CAmount nAmount, int nHeight,std::string addr) const;
     bool undoAddClaim(const std::string& name, const COutPoint& outPoint,
                       int nHeight) const;
     bool spendClaim(const std::string& name, const COutPoint& outPoint,
                     int nHeight, int& nValidAtHeight) const;
     bool undoSpendClaim(const std::string& name, const COutPoint& outPoint,
                         uint160 claimId, CAmount nAmount, int nHeight,
-                        int nValidAtHeight) const;
+                        int nValidAtHeight,std::string addr) const;
     
     bool addSupport(const std::string& name, const COutPoint& outPoint,
                     CAmount nAmount, uint160 supportedClaimId,
@@ -593,4 +600,4 @@ private:
     int getNumBlocksOfContinuousOwnership(const std::string& name) const;
 };
 
-#endif // BITCOIN_CLAIMTRIE_H
+#endif // ULORD_CLAIMTRIE_H

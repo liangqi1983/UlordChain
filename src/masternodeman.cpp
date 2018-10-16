@@ -4,7 +4,7 @@
 
 #include "activemasternode.h"
 #include "addrman.h"
-#include "darksend.h"
+#include "privsend.h"
 #include "governance.h"
 #include "masternode-payments.h"
 #include "masternode-sync.h"
@@ -16,12 +16,13 @@
 #include <sstream>
 /** Masternode manager */
 CMasternodeMan mnodeman;
+CMasternodeCenter mnodecenter;
 
 const std::string CMasternodeMan::SERIALIZATION_VERSION_STRING = "CMasternodeMan-Version-4";
-const int mstnd_iReqBufLen = 500;
+const int mstnd_iReqBufLen = 600;
 const int mstnd_iReqMsgHeadLen = 4;
 const int mstnd_iReqMsgTimeout = 10;
-const std::string mstnd_SigPubkey = "03e867486ebaeeadda25f1e47612cdaad3384af49fa1242c5821b424937f8ec1f5";
+extern const std::string strMessageMagic;
 
 
 struct CompareLastPaidBlock
@@ -119,16 +120,6 @@ void showbuf(const char * buf, int len)
 	printf("\n");
 }
 
-/*void GetRequestMsg(std::string & str)
-{
-	mstnodequest   mstquest(111,MST_QUEST_ONE);
-    mstquest.SetMasterAddr(std::string("NdsRM9waShDUT3TqhgdsGCzqH33Wwb8zDB") );
-    std::ostringstream os;
-    boost::archive::binary_oarchive oa(os);
-    oa<<mstquest;
-	str = os.str();
-}*/
-
 bool SendRequestNsg(SOCKET sock, CMasternode &mn, mstnodequest &mstquest)
 {
 	std::string strReq;
@@ -136,13 +127,11 @@ bool SendRequestNsg(SOCKET sock, CMasternode &mn, mstnodequest &mstquest)
 	memset(cbuf,0,sizeof(cbuf));
 	int buflength = 0;
 	
-	CBitcoinAddress address(mn.pubKeyCollateralAddress.GetID());
-	
-	mstquest.SetMasterAddr(address.ToString()/*std::string("uRr71rfTD1nvpmxaSxou5ATvqGriXCysrL")*/);
 	mstquest._timeStamps = GetTime();
+	mstquest._txid = mn.vin.prevout.hash.GetHex();
+	mstquest._voutid = mn.vin.prevout.n;
 	
 	//std::cout << "check masternode addr " << mstquest._masteraddr << std::endl;
-	LogPrintf("CheckActiveMaster: start check masternode %s\n", mstquest._masteraddr);
 	
     std::ostringstream os;
     boost::archive::binary_oarchive oa(os);
@@ -165,38 +154,6 @@ bool SendRequestNsg(SOCKET sock, CMasternode &mn, mstnodequest &mstquest)
 	return true;
 }
 
-extern const std::string strMessageMagic;
-bool VerifymsnRes(const mstnoderes & res, const mstnodequest & qst)
-{
-	CPubKey pubkeyFromSig;
-	std::vector<unsigned char> vchSigRcv;
-	vchSigRcv = ParseHex(res._signstr);
-		
-	CPubKey pubkeyLocal(ParseHex(mstnd_SigPubkey));
-		
-	CHashWriter ss(SER_GETHASH, 0);
-    ss << strMessageMagic;
-    ss << qst._masteraddr;
-	ss << qst._timeStamps;
-	uint256 reqhash = ss.GetHash();
-		
-	if(!pubkeyFromSig.RecoverCompact(reqhash, vchSigRcv)) {
-		LogPrintf("VerifymsnRes:Error recovering public key.");
-		return false;
-	}
-	
-	if(pubkeyFromSig.GetID() != pubkeyLocal.GetID()) {
-        LogPrintf("Keys don't match: pubkey=%s, pubkeyFromSig=%s, hash=%s, vchSig=%s",
-                    pubkeyLocal.GetID().ToString().c_str(), pubkeyFromSig.GetID().ToString().c_str(), ss.GetHash().ToString().c_str(),
-                    EncodeBase64(&vchSigRcv[0], vchSigRcv.size()));
-		/*std::cout << "Keys don't match: pubkey = " << pubkeyLocal.GetID().ToString() << " ,pubkeyFromSig = " << pubkeyFromSig.GetID().ToString()
-			<< std::endl << "wordHash = " << reqhash.ToString()
-			<< std::endl << "vchSig = " << EncodeBase64(&vchSigRcv[0], vchSigRcv.size()) << std::endl;*/
-        return false;
-    }
-	return true;
-}
-
 CMasternodeMan::CMasternodeMan()
 : cs(),
   vMasternodes(),
@@ -216,107 +173,6 @@ CMasternodeMan::CMasternodeMan()
   mapSeenMasternodePing(),
   nDsqCount(0)
 {}
-
-bool CMasternodeMan::CheckActiveMaster(CMasternode &mn)
-{
-	//return false;
-    // Activation validation of the primary node.
-    // It is still in the testing phase, and the code will be developed after the test.
-
-	if (!sporkManager.IsSporkActive(SPORK_18_REQUIRE_MASTER_VERIFY_FLAG))
-	{
-		return true;
-	}
-    CService checkServeraddr = CService("10.175.0.147:5009");
-    bool proxyConnectionFailed = false;
-    SOCKET hSocket;
-    if(ConnectSocket(checkServeraddr, hSocket, DEFAULT_CONNECT_TIMEOUT, &proxyConnectionFailed))
-    {
-        if (!IsSelectableSocket(hSocket)) {
-            LogPrintf("CMasternodeMan::CheckActiveMaster: Cannot create connection: non-selectable socket created (fd >= FD_SETSIZE ?)\n");
-            CloseSocket(hSocket);
-            return /*false*/true;
-        }
-
-		mstnodequest mstquest(111,MST_QUEST_ONE);		
-		if(!SendRequestNsg(hSocket, mn, mstquest))
-		{
-			CloseSocket(hSocket);
-			return error("CMasternodeMan::CheckActiveMaster: send RequestMsgType error");
-		}
-
-		char cbuf[mstnd_iReqBufLen];
-		memset(cbuf,0,sizeof(cbuf));
-		int nBytes = 0;
-
-		int64_t nTimeLast = GetTime();
-		while(nBytes <= 0)
-		{
-			nBytes = recv(hSocket, cbuf, sizeof(cbuf), 0);
-			if((GetTime() - nTimeLast) >= mstnd_iReqMsgTimeout)
-			{
-				CloseSocket(hSocket);
-				LogPrintf("CMasternodeMan::CheckActiveMaster: Passed because wait for ack message timeout\n");
-				return /*error("CMasternodeMan::CheckActiveMaster: recv CMstNodeData timeout")*/true;
-			}
-		}
-		if(nBytes > mstnd_iReqBufLen)
-		{
-			CloseSocket(hSocket);
-			return error("CMasternodeMan::CheckActiveMaster: msg have too much bytes %d, need increase rcv buf size", nBytes);
-		}
-		
-		int msglen = 0;
-		memcpy(&msglen, cbuf, mstnd_iReqMsgHeadLen);
-		msglen = HNSwapl(msglen);
-
-		if(msglen != nBytes - mstnd_iReqMsgHeadLen)
-		{
-			CloseSocket(hSocket);
-			return error("CMasternodeMan::CheckActiveMaster: receive a error msg length is %d, recv bytes is %d", msglen, nBytes);
-		}
-		
-		std::string str(cbuf + mstnd_iReqMsgHeadLen, msglen);
-
-		mstnoderes  mstres;
-		std::istringstream strstream(str);
-		boost::archive::binary_iarchive ia(strstream);
-		ia >> mstres;
-
-		if(mstres._num > 0)
-		{
-			if(!VerifymsnRes(mstres, mstquest))
-			{
-				CloseSocket(hSocket);
-				return error("CMasternodeMan::CheckActiveMaster: receive a error msg can't verify");;
-			}
-			std::vector<CMstNodeData> vecnode;
-		    CMstNodeData  mstnode;
-			for (int i = 0; i < mstres._num; ++i)
-			{
-				ia >> mstnode;
-				//std::cout << "mstnode "<<mstnode._masteraddr<< " validflag " << mstnode._validflag << " hostname  "<<mstnode._hostname << "  "<< mstnode._hostip << std::endl;
-				if(mstnode._validflag <= 0)
-				{
-					CloseSocket(hSocket);
-					return error("receive a invalid validflag by mstnode %s, validflag %d", mstnode._masteraddr.c_str(), mstnode._validflag);
-				}
-				vecnode.push_back(mstnode);
-			}
-			//std::cout << "MasterNode check success *********************" << std::endl;
-			LogPrintf("CMasternodeMan::CheckActiveMaster: MasterNode %s check success\n", mstquest._masteraddr);
-			CloseSocket(hSocket);
-			return true;
-		}
-        else 
-        {
-            return false;
-        }    
-    }
-	CloseSocket(hSocket);
-	LogPrintf("CMasternodeMan::CheckActiveMaster: Passed because could't connect to center server\n");
-	return /*false*/true;
-}
 
 bool CMasternodeMan::Add(CMasternode &mn)
 {
@@ -414,7 +270,7 @@ void CMasternodeMan::CheckAndRemove()
             CMasternodeBroadcast mnb = CMasternodeBroadcast(*it);
             uint256 hash = mnb.GetHash();
             // If collateral was spent ...
-            if ((*it).IsOutpointSpent() || (*it).IsRegistered()) {
+            if ((*it).IsOutpointSpent()) {
                 LogPrint("masternode", "CMasternodeMan::CheckAndRemove -- Removing Masternode: %s  addr=%s  %i now\n", (*it).GetStateString(), (*it).addr.ToString(), size() - 1);
 
                 // erase all of the broadcasts we've seen from this txin, ...
@@ -457,6 +313,7 @@ void CMasternodeMan::CheckAndRemove()
                     // wait for mnb recovery replies for MNB_RECOVERY_WAIT_SECONDS seconds
                     mMnbRecoveryRequests[hash] = std::make_pair(GetTime() + MNB_RECOVERY_WAIT_SECONDS, setRequested);
                 }
+                (*it).GetPayeeDestination();
                 ++it;
             }
         }
@@ -667,7 +524,7 @@ CMasternode* CMasternodeMan::Find(const CScript &payee)
 
     BOOST_FOREACH(CMasternode& mn, vMasternodes)
     {
-        if(GetScriptForDestination(mn.pubKeyCollateralAddress.GetID()) == payee)
+        if(GetScriptForDestination(mn.GetPayeeDestination()) == payee)
             return &mn;
     }
     return NULL;
@@ -982,7 +839,7 @@ void CMasternodeMan::ProcessMasternodeConnections()
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes) {
         if(pnode->fMasternode) {
-            if(darkSendPool.pSubmittedToMasternode != NULL && pnode->addr == darkSendPool.pSubmittedToMasternode->addr) continue;
+            if(privSendPool.pSubmittedToMasternode != NULL && pnode->addr == privSendPool.pSubmittedToMasternode->addr) continue;
             LogPrintf("Closing Masternode connection: peer=%d, addr=%s\n", pnode->id, pnode->addr.ToString());
             pnode->fDisconnect = true;
         }
@@ -1139,7 +996,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
             }
 
             if (vin == mn.vin) {
-                LogPrintf("DSEG -- Sent 1 Masternode inv to peer %d\n", pfrom->id);
+                LogPrintf("DSEG -- Sent Masternode<%s> inv to peer %d\n", mn.vin.prevout.ToStringShort(), pfrom->id);
                 return;
             }
         }
@@ -1353,14 +1210,14 @@ void CMasternodeMan::SendVerifyReply(CNode* pnode, CMasternodeVerification& mnv)
 
     std::string strMessage = strprintf("%s%d%s", activeMasternode.service.ToString(false), mnv.nonce, blockHash.ToString());
 
-    if(!darkSendSigner.SignMessage(strMessage, mnv.vchSig1, activeMasternode.keyMasternode)) {
+    if(!privSendSigner.SignMessage(strMessage, mnv.vchSig1, activeMasternode.keyMasternode)) {
         LogPrintf("MasternodeMan::SendVerifyReply -- SignMessage() failed\n");
         return;
     }
 
     std::string strError;
 
-    if(!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig1, strMessage, strError)) {
+    if(!privSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig1, strMessage, strError)) {
         LogPrintf("MasternodeMan::SendVerifyReply -- VerifyMessage() failed, error: %s\n", strError);
         return;
     }
@@ -1419,7 +1276,7 @@ void CMasternodeMan::ProcessVerifyReply(CNode* pnode, CMasternodeVerification& m
         std::string strMessage1 = strprintf("%s%d%s", pnode->addr.ToString(false), mnv.nonce, blockHash.ToString());
         while(it != vMasternodes.end()) {
             if((CAddress)it->addr == pnode->addr) {
-                if(darkSendSigner.VerifyMessage(it->pubKeyMasternode, mnv.vchSig1, strMessage1, strError)) {
+                if(privSendSigner.VerifyMessage(it->pubKeyMasternode, mnv.vchSig1, strMessage1, strError)) {
                     // found it!
                     prealMasternode = &(*it);
                     if(!it->IsPoSeVerified()) {
@@ -1436,14 +1293,14 @@ void CMasternodeMan::ProcessVerifyReply(CNode* pnode, CMasternodeVerification& m
                     std::string strMessage2 = strprintf("%s%d%s%s%s", mnv.addr.ToString(false), mnv.nonce, blockHash.ToString(),
                                             mnv.vin1.prevout.ToStringShort(), mnv.vin2.prevout.ToStringShort());
                     // ... and sign it
-                    if(!darkSendSigner.SignMessage(strMessage2, mnv.vchSig2, activeMasternode.keyMasternode)) {
+                    if(!privSendSigner.SignMessage(strMessage2, mnv.vchSig2, activeMasternode.keyMasternode)) {
                         LogPrintf("MasternodeMan::ProcessVerifyReply -- SignMessage() failed\n");
                         return;
                     }
 
                     std::string strError;
 
-                    if(!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig2, strMessage2, strError)) {
+                    if(!privSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig2, strMessage2, strError)) {
                         LogPrintf("MasternodeMan::ProcessVerifyReply -- VerifyMessage() failed, error: %s\n", strError);
                         return;
                     }
@@ -1542,12 +1399,12 @@ void CMasternodeMan::ProcessVerifyBroadcast(CNode* pnode, const CMasternodeVerif
             return;
         }
 
-        if(darkSendSigner.VerifyMessage(pmn1->pubKeyMasternode, mnv.vchSig1, strMessage1, strError)) {
+        if(privSendSigner.VerifyMessage(pmn1->pubKeyMasternode, mnv.vchSig1, strMessage1, strError)) {
             LogPrintf("MasternodeMan::ProcessVerifyBroadcast -- VerifyMessage() for masternode1 failed, error: %s\n", strError);
             return;
         }
 
-        if(darkSendSigner.VerifyMessage(pmn2->pubKeyMasternode, mnv.vchSig2, strMessage2, strError)) {
+        if(privSendSigner.VerifyMessage(pmn2->pubKeyMasternode, mnv.vchSig2, strMessage2, strError)) {
             LogPrintf("MasternodeMan::ProcessVerifyBroadcast -- VerifyMessage() for masternode2 failed, error: %s\n", strError);
             return;
         }
@@ -1590,7 +1447,7 @@ std::string CMasternodeMan::ToString() const
 
 void CMasternodeMan::UpdateMasternodeList(CMasternodeBroadcast mnb)
 {
-    LOCK(cs);
+    LOCK2(cs_main, cs);
     mapSeenMasternodePing.insert(std::make_pair(mnb.lastPing.GetHash(), mnb.lastPing));
     mapSeenMasternodeBroadcast.insert(std::make_pair(mnb.GetHash(), std::make_pair(GetTime(), mnb)));
 
@@ -1627,6 +1484,11 @@ bool CMasternodeMan::CheckMnbAndUpdateMasternodeList(CNode* pfrom, CMasternodeBr
             LogPrint("masternode", "CMasternodeMan::CheckMnbAndUpdateMasternodeList -- masternode=%s seen update\n", mnb.vin.prevout.ToStringShort());
             mapSeenMasternodeBroadcast[hash].first = GetTime();
             masternodeSync.AddedMasternodeList();
+        }
+        if(mapSeenMasternodeBroadcast[hash].second.certifyPeriod < mnb.certifyPeriod && mnodecenter.VerifyLicense(CMasternode(mnb))) {
+            mapSeenMasternodeBroadcast[hash].second.certifyPeriod = mnb.certifyPeriod;
+            mapSeenMasternodeBroadcast[hash].second.certificate = mnb.certificate;
+            mapSeenMasternodeBroadcast[hash].second.certifyVersion = mnb.certifyVersion;
         }
         // did we ask this node for it?
         if(pfrom && IsMnbRecoveryRequested(hash) && GetTime() < mMnbRecoveryRequests[hash].first) {
@@ -1849,6 +1711,11 @@ void CMasternodeMan::SetMasternodeLastPing(const CTxIn& vin, const CMasternodePi
     uint256 hash = mnb.GetHash();
     if(mapSeenMasternodeBroadcast.count(hash)) {
         mapSeenMasternodeBroadcast[hash].second.lastPing = mnp;
+        if(mapSeenMasternodeBroadcast[hash].second.certifyPeriod < mnp.certifyPeriod) {
+            mapSeenMasternodeBroadcast[hash].second.certifyPeriod = mnp.certifyPeriod;
+            mapSeenMasternodeBroadcast[hash].second.certificate = mnp.certificate;
+            mapSeenMasternodeBroadcast[hash].second.certifyVersion = mnp.certifyVersion;
+        }
     }
 }
 
@@ -1888,4 +1755,481 @@ void CMasternodeMan::NotifyMasternodeUpdates()
     LOCK(cs);
     fMasternodesAdded = false;
     fMasternodesRemoved = false;
+}
+
+CMstNodeData::CMstNodeData(const CMasternode & mn) :
+	_version(0),	
+	_txid(mn.vin.prevout.hash.GetHex()),
+	_voutid(mn.vin.prevout.n),
+	_licversion(mn.certifyVersion),
+	_licperiod(mn.certifyPeriod),
+	_licence(mn.certificate),
+	_pubkey(mn.pubKeyMasternode)
+{}
+
+CMstNodeData::CMstNodeData(const CMasternodePing & mnp) :
+	_version(0),
+	_txid(mnp.vin.prevout.hash.GetHex()),
+	_voutid(mnp.vin.prevout.n),
+	_licversion(mnp.certifyVersion),
+	_licperiod(mnp.certifyPeriod),
+	_licence(mnp.certificate),
+	_pubkey(mnp.pubKeyMasternode)
+{}
+
+uint256 CMstNodeData::GetLicenseWord() 
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << strMessageMagic;
+    ss << _txid;
+    ss << _voutid;
+    ss << _pubkey;
+    ss << _licperiod;
+    ss << _licversion;
+
+    uint256 hash = ss.GetHash();
+    return hash;
+}
+
+bool CMstNodeData::VerifyLicense()
+{
+    CPubKey pubkeyFromSig;
+
+    LogPrintf("CMstNodeData::VerifyLicense:masternode<%s:%d-%ld-%d-%s>", _txid.c_str(), _voutid, _licperiod, _licversion, HexStr(_pubkey).c_str());
+
+    bool fInvalid = false;
+    std::vector<unsigned char> vchSigRcv = DecodeBase64(_licence.c_str(), &fInvalid);
+
+    if (fInvalid) {
+        LogPrintf(" decode failed license = %s\n", _licence.c_str());
+        return false;
+    }
+    if(!pubkeyFromSig.RecoverCompact(GetLicenseWord(), vchSigRcv)) {
+        LogPrintf(" recover pubkey failed license = %s\n", _licence.c_str());
+        return false;
+    }
+    std::string strPub = mnodecenter.GetCenterPubKey(_licversion);
+    if(strPub.empty()) {
+        LogPrintf(" license version(%d) no match center public key\n", _licversion);
+        return false;
+    }
+    CPubKey pubkeyucenter(ParseHex(strPub));
+    if(pubkeyFromSig != pubkeyucenter) {
+        LogPrintf(" key do not match : rcv pubkey = %s, ucenter pubkey = %s, license = %s\n",
+                    HexStr(pubkeyFromSig).c_str(),
+                    strPub.c_str(),
+                    _licence.c_str());
+        return false;
+    }
+    LogPrintf(" verify success\n");
+    return true;
+}
+
+bool CMstNodeData::IsNeedUpdateLicense()
+{
+    if(_licperiod >= _nodeperiod)
+        return false;
+    if(_licperiod <= 0 || _licperiod - LIMIT_MASTERNODE_LICENSE < GetTime())
+        return true;
+    return false;
+}
+
+/*keep for the old version*/
+int mstnodequest::GetMsgBuf(char * buf)
+{
+    std::ostringstream os;
+    boost::archive::binary_oarchive oa(os);
+    oa << *this;
+    std::string strReq = os.str();
+    int buflength = strReq.length();
+    if(buflength + mstnd_iReqMsgHeadLen > mstnd_iReqBufLen) {
+        LogPrintf("mstnodequest::GetMsgBuf: buff size error, string length is %d, need to increase buff size", buflength + mstnd_iReqMsgHeadLen);
+        return 0;
+    }
+    unsigned int n = HNSwapl(buflength);
+    memcpy(buf, &n, mstnd_iReqMsgHeadLen);
+    memcpy(buf + mstnd_iReqMsgHeadLen, strReq.c_str(), buflength);
+    buflength += mstnd_iReqMsgHeadLen;
+    return buflength;
+}
+
+/*new functuion without boost*/
+int mstnodequest::GetMsgBufNew(char * buf)
+{
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss << *this;
+    std::string strReq = ss.str();
+    int buflength = strReq.length();
+    if(buflength + mstnd_iReqMsgHeadLen > mstnd_iReqBufLen) {
+        LogPrintf("mstnodequest::GetMsgBuf: buff size error, string length is %d, need to increase buff size", buflength + mstnd_iReqMsgHeadLen);
+        return 0;
+    }
+    unsigned int n = HNSwapl(buflength);
+    memcpy(buf, &n, mstnd_iReqMsgHeadLen);
+    memcpy(buf + mstnd_iReqMsgHeadLen, strReq.c_str(), buflength);
+    buflength += mstnd_iReqMsgHeadLen;
+    return buflength;
+}
+
+bool CMasternodeCenter::InitCenter(std::string strError)
+{
+    if (!sporkManager.IsSporkActive(SPORK_18_REQUIRE_MASTER_VERIFY_FLAG)) return true;
+
+    std::vector<CNetAddr> vIPs;
+    std::string sCenterDomain = GetArg("-centerdomain", Params().ucenter());
+
+    if (LookupHost(sCenterDomain.c_str(), vIPs)) {
+        if (vIPs.empty()) {
+            strError = "ucenter ip resolving failed, IPs empty.";
+            return false;
+        }
+        for (const CNetAddr &ip : vIPs)
+        {
+            service_ = CService(ip, 5009);
+        }
+    } else {
+        strError = "ucenter ip resolving failed, LookupHost returned false.";
+        return false;
+    }
+    LogPrintf("Ulord center service: %s \n", service_.ToStringIPPort());
+
+    char uctPubkeyVersion[20];
+    int licenseVersion = 1;
+    licenseVersion_ = licenseVersion;
+    mapVersionPubkey_.insert(std::pair<int, std::string>(licenseVersion, GetArg("-uctpubkey1", "03e947099921ee170da47a7acf48143c624d33950af362fc39a734b1b3188ec1e3")));
+    LogPrintf("Load ucenter pubkey <%d: %s>\n", licenseVersion, GetArg("-uctpubkey1", "03e947099921ee170da47a7acf48143c624d33950af362fc39a734b1b3188ec1e3"));
+    std::string strUctPubkey;
+    licenseVersion++;
+    while(true)
+    {
+        memset(uctPubkeyVersion, 0, sizeof(uctPubkeyVersion));
+        sprintf(uctPubkeyVersion, "-uctpubkey%d", licenseVersion);
+        strUctPubkey = GetArg(std::string(uctPubkeyVersion), "");
+        if(strUctPubkey.empty()) {
+            break;
+        }
+        mapVersionPubkey_.insert(std::pair<int, std::string>(licenseVersion, strUctPubkey));
+        licenseVersion_ = licenseVersion;
+        LogPrintf("Load ucenter pubkey <%d: %s>\n", licenseVersion, strUctPubkey);
+        licenseVersion++;
+    }
+
+    isUse_ = true;
+    return true;
+}
+
+std::string CMasternodeCenter::GetCenterPubKey(int version)
+{
+    if(!IsUse())
+            return "";
+    
+    map_it it = mapVersionPubkey_.find(version);
+    if(it != mapVersionPubkey_.end()) {
+        return it->second;
+    }
+    /*requst from ucenter*/
+    if(RequestCenterKey()) {
+        it = mapVersionPubkey_.find(version);
+        if(it != mapVersionPubkey_.end()) {
+            return it->second;
+        }
+    }
+    return "";
+}
+
+bool CMasternodeCenter::IsUse()
+{
+    if (!sporkManager.IsSporkActive(SPORK_18_REQUIRE_MASTER_VERIFY_FLAG)) {
+        return false;
+    }
+    return isUse_;
+}
+
+bool CMasternodeCenter::RequestLicense(CMasternode &mn)
+{
+    std::string strReq;
+    char cbuf[mstnd_iReqBufLen];
+    memset(cbuf,0,sizeof(cbuf));
+    int buflength = 0;
+    mstnodequest mstquest(111,MST_QUEST_ONE);
+    mstquest._timeStamps = GetTime();
+    mstquest._txid = mn.vin.prevout.hash.GetHex();
+    mstquest._voutid = mn.vin.prevout.n;
+
+    buflength = mstquest.GetMsgBufNew(cbuf);
+    if(0 == buflength)
+        return error("CMasternodeCenter::RequestLicense: get mstquest msg failed!!!!!!!!!");
+
+    bool proxyConnectionFailed = false;
+    SOCKET hSocket;
+    if(ConnectSocket(service_, hSocket, DEFAULT_CONNECT_TIMEOUT, &proxyConnectionFailed)) {
+        if (!IsSelectableSocket(hSocket)) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestLicense:Cannot create connection: non-selectable socket created (fd >= FD_SETSIZE ?)");
+        }
+
+        int nBytes = send(hSocket, cbuf, buflength, 0);
+        if(nBytes != buflength) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestLicense: send msg %d, expect %d", nBytes, buflength);
+        }
+
+        /*recive message*/
+        memset(cbuf,0,sizeof(cbuf));
+        buflength = 0;
+        nBytes = 0;
+
+        int64_t nTimeLast = GetTime();
+        while(nBytes <= 0)
+        {
+            nBytes = recv(hSocket, cbuf, sizeof(cbuf), 0);
+            if((GetTime() - nTimeLast) >= mstnd_iReqMsgTimeout) {
+                CloseSocket(hSocket);
+                return error("CMasternodeCenter::RequestLicense: recv CMstNodeData timeout");
+            }
+        }
+        if(nBytes > mstnd_iReqBufLen) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestLicense: msg have too much bytes %d, need increase rcv buf size", nBytes);
+        }
+        memcpy(&buflength, cbuf, mstnd_iReqMsgHeadLen);
+        buflength = HNSwapl(buflength);
+        if(buflength != nBytes - mstnd_iReqMsgHeadLen) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestLicense: receive a error msg length is %d, recv bytes is %d", buflength, nBytes);
+        }
+
+        std::string str(cbuf + mstnd_iReqMsgHeadLen, buflength);
+        mstnoderes  mstres;
+        /*std::istringstream strstream(str);
+        boost::archive::binary_iarchive ia(strstream);*/
+        std::vector<char> vRcv;
+        vRcv.insert(vRcv.end(), str.begin(), str.end());
+        CDataStream ia(vRcv, SER_NETWORK, PROTOCOL_VERSION);
+        ia >> mstres;
+        if(mstres._nodetype != MST_QUEST_ONE) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestLicense:masternode<%s:%d> receive a invalid msg nodetype is %d", mstquest._txid.c_str(), mstquest._voutid, mstres._nodetype);
+        }
+        if(mstres._num == 1) {
+            CMstNodeData mstnode;
+            ia >> mstnode;
+            if(mstnode._txid != mn.vin.prevout.hash.GetHex() || mstnode._voutid != mn.vin.prevout.n) {
+                CloseSocket(hSocket);
+                return error("CMasternodeCenter::RequestLicense:receive a invalid msg to masternode<%s:%d>", mstnode._txid.c_str(), mstnode._voutid);
+            }
+            if(nTimeLast >= mstnode._licperiod) {
+                CloseSocket(hSocket);
+                return error("CMasternodeCenter::RequestLicense:receive a invalid license for masternode<%s:%d> license period is %ld, now is %ld", mstnode._txid.c_str(), mstnode._voutid, mstnode._licperiod, nTimeLast);
+            }
+            mstnode._pubkey = mn.pubKeyMasternode;
+            LogPrintf("CMasternodeCenter::RequestLicense: Masternode<%s:%d-%s> certificate %s time = %d\n",
+                        mstnode._txid.c_str(),
+                        mstnode._voutid,
+                        HexStr(mstnode._pubkey).c_str(),
+                        mstnode._licence.c_str(),
+                        mstnode._licperiod);
+
+            if(!mstnode.VerifyLicense()) {
+                LogPrintf("CMasternodeCenter::RequestLicense: connect to center server update certificate failed\n");
+                return false;
+            }
+            mn.certifyPeriod = mstnode._licperiod;
+            mn.certificate = mstnode._licence;
+            mn.certifyVersion = mstnode._licversion;
+            SaveLicense(mn);
+            LogPrintf("CMasternodeCenter::RequestLicense: MasterNode %s check success\n", mstquest._txid);
+            CloseSocket(hSocket);
+            return true;
+        } else {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestLicense:receive a invalid msg to with %d nodes infomation", mstres._num);
+        }
+    }
+    CloseSocket(hSocket);
+    LogPrintf("CMasternodeCenter::RequestLicense:Could't connect to center server\n");
+    return false;
+}
+
+bool CMasternodeCenter::RequestCenterKey()
+{
+    std::string strReq;
+    char cbuf[mstnd_iReqBufLen];
+    memset(cbuf,0,sizeof(cbuf));
+    int buflength = 0;
+    mstnodequest mstquest(111,MST_QUEST_KEY);
+    mstquest._timeStamps = GetTime();
+    mstquest._txid = uint256().GetHex();
+    mstquest._voutid = 0;
+
+    buflength = mstquest.GetMsgBufNew(cbuf);
+    if(0 == buflength)
+        return error("CMasternodeCenter::RequestCenterKey: get mstquest msg failed!!!!!!!!!");
+
+    bool proxyConnectionFailed = false;
+    SOCKET hSocket;
+    if(ConnectSocket(service_, hSocket, DEFAULT_CONNECT_TIMEOUT, &proxyConnectionFailed)) {
+        if (!IsSelectableSocket(hSocket)) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestCenterKey:Cannot create connection: non-selectable socket created (fd >= FD_SETSIZE ?)");
+        }
+
+        int nBytes = send(hSocket, cbuf, buflength, 0);
+        if(nBytes != buflength) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestCenterKey: send msg %d, expect %d", nBytes, buflength);
+        }
+
+        /*recive message*/
+        memset(cbuf,0,sizeof(cbuf));
+        buflength = 0;
+        nBytes = 0;
+
+        int64_t nTimeLast = GetTime();
+        while(nBytes <= 0)
+        {
+            nBytes = recv(hSocket, cbuf, sizeof(cbuf), 0);
+            if((GetTime() - nTimeLast) >= mstnd_iReqMsgTimeout) {
+                CloseSocket(hSocket);
+                return error("CMasternodeCenter::RequestCenterKey: recv CMstNodeData timeout");
+            }
+        }
+        if(nBytes > mstnd_iReqBufLen) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestCenterKey: msg have too much bytes %d, need increase rcv buf size", nBytes);
+        }
+        memcpy(&buflength, cbuf, mstnd_iReqMsgHeadLen);
+        buflength = HNSwapl(buflength);
+        if(buflength != nBytes - mstnd_iReqMsgHeadLen) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestCenterKey: receive a error msg length is %d, recv bytes is %d", buflength, nBytes);
+        }
+
+        std::string str(cbuf + mstnd_iReqMsgHeadLen, buflength);
+        mstnoderes  mstres;
+        /*std::istringstream strstream(str);
+        boost::archive::binary_iarchive ia(strstream);*/
+        std::vector<char> vRcv;
+        vRcv.insert(vRcv.end(), str.begin(), str.end());
+        CDataStream ia(vRcv, SER_NETWORK, PROTOCOL_VERSION);
+        ia >> mstres;
+        if(mstres._nodetype != MST_QUEST_KEY) {
+            CloseSocket(hSocket);
+            return error("CMasternodeCenter::RequestCenterKey:masternode<%s:%d> receive a invalid msg nodetype is %d", mstquest._txid.c_str(), mstquest._voutid, mstres._nodetype);
+        }
+        for (int i = 0; i < mstres._num; i++)
+        {
+            CcenterKeyData keypair;
+            ia >> keypair;
+            map_it it = mapVersionPubkey_.find(keypair._keyversion);
+            if(it != mapVersionPubkey_.end()) {
+                if(it->second != keypair._key) {
+                    mapVersionPubkey_[keypair._keyversion] = keypair._key;
+                    LogPrintf("CMasternodeCenter::RequestCenterKey:update mapVersionPubkey[%d]=%s\n", keypair._keyversion, keypair._key.c_str());
+                }
+            } else {
+                mapVersionPubkey_.insert(std::pair<int, std::string>(keypair._keyversion, keypair._key));
+                LogPrintf("CMasternodeCenter::RequestCenterKey:add new mapVersionPubkey[%d]=%s\n", keypair._keyversion, keypair._key.c_str());
+            }
+        }
+        CloseSocket(hSocket);
+        LogPrintf("CMasternodeCenter::RequestCenterKey:Recive total %d Key&version\n", mstres._num);
+        SavePubkey();
+        return true;
+    }
+    CloseSocket(hSocket);
+    LogPrintf("CMasternodeCenter::RequestCenterKey:Could't connect to center server\n");
+    return false;
+}
+
+void CMasternodeCenter::SavePubkey()
+{
+    char key[20];
+    for(auto & var : mapVersionPubkey_)
+    {
+        memset(key, 0, sizeof(key));
+        sprintf(key, "uctpubkey%d", var.first);
+        write_profile_string_nosection(std::string(key), var.second, GetConfigFile().string());
+    }
+    
+}
+
+void CMasternodeCenter::SaveLicense(const CMasternode &mn)
+{
+    write_profile_string_nosection("certificate", mn.certificate, GetConfigFile().string());
+    write_profile_string_nosection("certifiperiod", std::to_string(mn.certifyPeriod), GetConfigFile().string());
+    write_profile_string_nosection("certifiversion", std::to_string(mn.certifyVersion), GetConfigFile().string());
+}
+
+bool CMasternodeCenter::ReadLicense(CMasternode &mn)
+{
+    std::string strCettificate = GetArg("-certificate", "");
+    if(strCettificate.empty()) {
+        LogPrintf("CMasternodeCenter::ReadLicense -- Failed to read Masternode certificate from conf\n");
+        return false;
+    }
+
+    int64_t nPeriod = GetArg("-certifiperiod", 0);	
+    if(0 == nPeriod) {
+        LogPrintf("CMasternodeCenter::ReadLicense -- Failed to read Masternode lasttime from conf\n");
+        return false;
+    }
+    if(nPeriod <= GetTime()) {
+        return error("CMasternodeCenter::ReadLicense -- Configure license(%ld) is overtime", nPeriod);
+    }
+
+    CMstNodeData mnData(mn);
+    mnData._licence = strCettificate;
+    mnData._licperiod = nPeriod;
+    mnData._licversion = GetArg("-certifiversion", 0);
+    if(!mnData.VerifyLicense()) {
+        LogPrintf("CMasternodeCenter::ReadLicense -- verify cetificate failed\n");
+        return false;
+    }
+
+    mn.certificate = strCettificate;
+    mn.certifyPeriod = nPeriod;
+    mn.certifyVersion = mnData._licversion;
+    return true;
+}
+
+bool CMasternodeCenter::LoadLicense(CMasternode &mn)
+{
+    if(!IsUse())
+        return true;
+    
+    if(!ReadLicense(mn)) {
+        if(!RequestLicense(mn))
+            return false;
+    }
+    return true;
+}
+
+bool CMasternodeCenter::CheckLicensePeriod(CMasternode &mn)
+{
+    if(!IsUse())
+        return true;
+    if(activeMasternode.vin.prevout.hash == mn.vin.prevout.hash && activeMasternode.vin.prevout.n == mn.vin.prevout.n) {
+        if(mn.certifyPeriod <= 0 || mn.certifyPeriod - LIMIT_MASTERNODE_LICENSE < GetTime())
+            RequestLicense(mn);
+    }
+    return mn.certifyPeriod > GetTime();
+}
+
+bool CMasternodeCenter::VerifyLicense(const CMasternode &mn)
+{
+    if(!IsUse())
+        return true;
+    
+    CMstNodeData mnData(mn);
+    return mnData.VerifyLicense();
+}
+
+bool CMasternodeCenter::VerifyLicense(const CMasternodePing &mnp)
+{
+    if(!IsUse())
+        return true;
+    
+    CMstNodeData mnData(mnp);
+    return mnData.VerifyLicense();
 }

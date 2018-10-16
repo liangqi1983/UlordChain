@@ -96,6 +96,7 @@ bool IsStandardTx(const CTransaction& tx, std::string& reason)
     txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, tx.vout) {
         const CScript scriptPubkey = StripClaimScriptPrefix(txout.scriptPubKey);
+		
 	    if (!::IsStandard(scriptPubkey, whichType)) {						
 			reason = "scriptpubkey";
             return false;
@@ -111,7 +112,7 @@ bool IsStandardTx(const CTransaction& tx, std::string& reason)
             return false;
         }
     }
-
+	
     // only one OP_RETURN txout is permitted
     if (nDataOut > 1) {
         reason = "multi-op-return";
@@ -155,3 +156,4 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
 
     return true;
 }
+

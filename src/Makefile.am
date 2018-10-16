@@ -101,9 +101,9 @@ BITCOIN_CORE_H = \
   consensus/validation.h \
   core_io.h \
   core_memusage.h \
-  darksend.h \
+  privsend.h \
   dsnotificationinterface.h \
-  darksend-relay.h \
+  privsend-relay.h \
   governance.h \
   governance-classes.h \
   governance-exceptions.h \
@@ -201,20 +201,28 @@ libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_server_a_SOURCES = \
+  activemasternode.cpp \
   addrman.cpp \
   alert.cpp \
   bloom.cpp \
   chain.cpp \
   checkpoints.cpp \
+  dsnotificationinterface.cpp \
   httprpc.cpp \
   httpserver.cpp \
   init.cpp \
+  instantx.cpp \
   dbwrapper.cpp \
   governance.cpp \
   governance-classes.cpp \
   governance-object.cpp \
   governance-vote.cpp \
   governance-votedb.cpp \
+  masternode.cpp \
+  masternode-payments.cpp \
+  masternode-sync.cpp \
+  masternodeconfig.cpp \
+  masternodeman.cpp \
   main.cpp \
   merkleblock.cpp \
   claimtrie.cpp \
@@ -225,6 +233,7 @@ libbitcoin_server_a_SOURCES = \
   policy/fees.cpp \
   policy/policy.cpp \
   pow.cpp \
+  privsend.cpp \
   rest.cpp \
   rpcblockchain.cpp \
   rpcmasternode.cpp \
@@ -261,16 +270,7 @@ endif
 libbitcoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 libbitcoin_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_wallet_a_SOURCES = \
-  activemasternode.cpp \
-  darksend.cpp \
-  dsnotificationinterface.cpp \
-  darksend-relay.cpp \
-  instantx.cpp \
-  masternode.cpp \
-  masternode-payments.cpp \
-  masternode-sync.cpp \
-  masternodeconfig.cpp \
-  masternodeman.cpp \
+  privsend-relay.cpp \
   keepass.cpp \
   wallet/crypter.cpp \
   wallet/db.cpp \
@@ -284,7 +284,7 @@ libbitcoin_wallet_a_SOURCES = \
 
 # hello primitives library
 hello_libbitcoin_hello_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
-hello_libbitcoin_hello_a_CFLAGS = $(AM_CFLAGS)
+hello_libbitcoin_hello_a_CFLAGS = $(AM_CFLAGS) "-std=gnu99" 
 hello_libbitcoin_hello_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
 hello_libbitcoin_hello_a_SOURCES = \
     hello/PoW.c \

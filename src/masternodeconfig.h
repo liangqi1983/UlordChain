@@ -6,6 +6,8 @@
 #ifndef SRC_MASTERNODECONFIG_H_
 #define SRC_MASTERNODECONFIG_H_
 
+#include "primitives/transaction.h"
+
 class CMasternodeConfig;
 extern CMasternodeConfig masternodeConfig;
 
@@ -31,6 +33,14 @@ public:
             this->txHash = txHash;
             this->outputIndex = outputIndex;
         }
+
+		CMasternodeEntry(){
+			this->alias = "";
+            this->ip = "";
+            this->privKey = "";
+            this->txHash = "";
+            this->outputIndex = "";
+		}
 
         const std::string& getAlias() const {
             return alias;
@@ -88,6 +98,10 @@ public:
     int getCount() {
         return (int)entries.size();
     }
+
+    CMasternodeConfig::CMasternodeEntry GetLocalEntry();
+    bool GetMasternodeVin(CTxIn& txinRet,  std::string strTxHash = "", std::string strOutputIndex = "");
+    bool AvailableCoins(uint256 txHash, unsigned int index);
 
 private:
     std::vector<CMasternodeEntry> entries;

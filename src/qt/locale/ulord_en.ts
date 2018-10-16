@@ -219,8 +219,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR ULD&lt;/b&gt;!</source>
-        <translation>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR ULD&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR UT&lt;/b&gt;!</source>
+        <translation>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR UT&lt;/b&gt;!</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -562,8 +562,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>Open a ulord: URI or payment request</source>
-        <translation>Open a ulord: URI or payment request</translation>
+        <source>Open a Ulord: URI or payment request</source>
+        <translation>Open a Ulord: URI or payment request</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -933,8 +933,8 @@ Address: %4
     </message>
     <message>
         <location line="+329"/>
-        <source>Non-anonymized input selected. &lt;b&gt;Darksend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Darksend, please deselect all non-nonymized inputs first and then check Darksend checkbox again.</source>
-        <translation>Non-anonymized input selected. &lt;b&gt;Darksend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Darksend, please deselect all non-nonymized inputs first and then check Darksend checkbox again.</translation>
+        <source>Non-anonymized input selected. &lt;b&gt;PrivSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivSend, please deselect all non-nonymized inputs first and then check PrivSend checkbox again.</source>
+        <translation>Non-anonymized input selected. &lt;b&gt;PrivSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivSend, please deselect all non-nonymized inputs first and then check PrivSend checkbox again.</translation>
     </message>
     <message>
         <location line="+32"/>
@@ -1062,11 +1062,11 @@ Address: %4
     </message>
 </context>
 <context>
-    <name>DarksendConfig</name>
+    <name>PrivsendConfig</name>
     <message>
-        <location filename="../forms/darksendconfig.ui" line="+14"/>
-        <source>Configure Darksend</source>
-        <translation>Configure Darksend</translation>
+        <location filename="../forms/privsendconfig.ui" line="+14"/>
+        <source>Configure PrivSend</source>
+        <translation>Configure PrivSend</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -1090,13 +1090,13 @@ Address: %4
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 2 separate masternodes to mix funds up to 1000 ULD</source>
-        <translation>Use 2 separate masternodes to mix funds up to 1000 ULD</translation>
+        <source>Use 2 separate masternodes to mix funds up to 1000 UT</source>
+        <translation>Use 2 separate masternodes to mix funds up to 1000 UT</translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>Use 8 separate masternodes to mix funds up to 1000 ULD</source>
-        <translation>Use 8 separate masternodes to mix funds up to 1000 ULD</translation>
+        <source>Use 8 separate masternodes to mix funds up to 1000 UT</source>
+        <translation>Use 8 separate masternodes to mix funds up to 1000 UT</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1105,18 +1105,18 @@ Address: %4
     </message>
     <message>
         <location line="+13"/>
-        <source>This option is the quickest and will cost about ~0.025 ULD to anonymize 1000 ULD</source>
-        <translation>This option is the quickest and will cost about ~0.025 ULD to anonymize 1000 ULD</translation>
+        <source>This option is the quickest and will cost about ~0.025 UT to anonymize 1000 UT</source>
+        <translation>This option is the quickest and will cost about ~0.025 UT to anonymize 1000 UT</translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>This option is moderately fast and will cost about 0.05 ULD to anonymize 1000 ULD</source>
-        <translation>This option is moderately fast and will cost about 0.05 ULD to anonymize 1000 ULD</translation>
+        <source>This option is moderately fast and will cost about 0.05 UT to anonymize 1000 UT</source>
+        <translation>This option is moderately fast and will cost about 0.05 UT to anonymize 1000 UT</translation>
     </message>
     <message>
         <location line="+26"/>
-        <source>0.1 ULD per 1000 ULD you anonymize.</source>
-        <translation>0.1 ULD per 1000 ULD you anonymize.</translation>
+        <source>0.1 UT per 1000 UT you anonymize.</source>
+        <translation>0.1 UT per 1000 UT you anonymize.</translation>
     </message>
     <message>
         <location line="-13"/>
@@ -1124,26 +1124,26 @@ Address: %4
         <translation>This is the slowest and most secure option. Using maximum anonymity will cost</translation>
     </message>
     <message>
-        <location filename="../darksendconfig.cpp" line="+43"/>
+        <location filename="../privsendconfig.cpp" line="+43"/>
         <location line="+15"/>
         <location line="+15"/>
-        <source>Darksend Configuration</source>
-        <translation>Darksend Configuration</translation>
+        <source>PrivSend Configuration</source>
+        <translation>PrivSend Configuration</translation>
     </message>
     <message>
         <location line="-29"/>
-        <source>Darksend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</source>
-        <translation>Darksend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</translation>
+        <source>PrivSend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</source>
+        <translation>PrivSend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Darksend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</source>
-        <translation>Darksend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</translation>
+        <source>PrivSend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</source>
+        <translation>PrivSend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Darksend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</source>
-        <translation>Darksend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</translation>
+        <source>PrivSend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</source>
+        <translation>PrivSend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Ulord&apos;s configuration screen.</translation>
     </message>
 </context>
 <context>
@@ -1441,13 +1441,13 @@ Address: %4
     </message>
     <message>
         <location line="+40"/>
-        <source>Darksend rounds to use</source>
-        <translation>Darksend rounds to use</translation>
+        <source>PrivSend rounds to use</source>
+        <translation>PrivSend rounds to use</translation>
     </message>
     <message>
         <location line="+24"/>
-        <source>This amount acts as a threshold to turn off Darksend once it&apos;s reached.</source>
-        <translation>This amount acts as a threshold to turn off Darksend once it&apos;s reached.</translation>
+        <source>This amount acts as a threshold to turn off PrivSend once it&apos;s reached.</source>
+        <translation>This amount acts as a threshold to turn off PrivSend once it&apos;s reached.</translation>
     </message>
     <message>
         <location line="+15"/>
@@ -1790,8 +1790,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+20"/>
-        <source>Darksend Balance:</source>
-        <translation>Darksend Balance:</translation>
+        <source>PrivSend Balance:</source>
+        <translation>PrivSend Balance:</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -1800,8 +1800,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+7"/>
-        <source>0 ULD / 0 Rounds</source>
-        <translation>0 ULD / 0 Rounds</translation>
+        <source>0 UT / 0 Rounds</source>
+        <translation>0 UT / 0 Rounds</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -1819,8 +1819,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <location line="+10"/>
         <location line="+10"/>
         <location line="+14"/>
-        <source>Darksend</source>
-        <translation>Darksend</translation>
+        <source>PrivSend</source>
+        <translation>PrivSend</translation>
     </message>
     <message>
         <location line="+74"/>
@@ -1844,8 +1844,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+25"/>
-        <source>Try to manually submit a Darksend request.</source>
-        <translation>Try to manually submit a Darksend request.</translation>
+        <source>Try to manually submit a PrivSend request.</source>
+        <translation>Try to manually submit a PrivSend request.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1854,8 +1854,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+19"/>
-        <source>Reset the current status of Darksend (can interrupt Darksend if it&apos;s in the process of Mixing, which can cost you money!)</source>
-        <translation>Reset the current status of Darksend (can interrupt Darksend if it&apos;s in the process of Mixing, which can cost you money!)</translation>
+        <source>Reset the current status of PrivSend (can interrupt PrivSend if it&apos;s in the process of Mixing, which can cost you money!)</source>
+        <translation>Reset the current status of PrivSend (can interrupt PrivSend if it&apos;s in the process of Mixing, which can cost you money!)</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1881,14 +1881,14 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <location line="-288"/>
         <location line="+290"/>
         <location line="+91"/>
-        <source>Start Darksend Mixing</source>
-        <translation>Start Darksend Mixing</translation>
+        <source>Start PrivSend Mixing</source>
+        <translation>Start PrivSend Mixing</translation>
     </message>
     <message>
         <location line="-379"/>
         <location line="+382"/>
-        <source>Stop Darksend Mixing</source>
-        <translation>Stop Darksend Mixing</translation>
+        <source>Stop PrivSend Mixing</source>
+        <translation>Stop PrivSend Mixing</translation>
     </message>
     <message>
         <location line="-211"/>
@@ -1945,9 +1945,9 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+5"/>
-        <source>Last Darksend message:
+        <source>Last PrivSend message:
 </source>
-        <translation>Last Darksend message:
+        <translation>Last PrivSend message:
 </translation>
     </message>
     <message>
@@ -1957,23 +1957,23 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+18"/>
-        <source>Darksend was successfully reset.</source>
-        <translation>Darksend was successfully reset.</translation>
+        <source>PrivSend was successfully reset.</source>
+        <translation>PrivSend was successfully reset.</translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>If you don&apos;t want to see internal Darksend fees/transactions select &quot;Most Common&quot; as Type on the &quot;Transactions&quot; tab.</source>
-        <translation>If you don&apos;t want to see internal Darksend fees/transactions select &quot;Most Common&quot; as Type on the &quot;Transactions&quot; tab.</translation>
+        <source>If you don&apos;t want to see internal PrivSend fees/transactions select &quot;Most Common&quot; as Type on the &quot;Transactions&quot; tab.</source>
+        <translation>If you don&apos;t want to see internal PrivSend fees/transactions select &quot;Most Common&quot; as Type on the &quot;Transactions&quot; tab.</translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>Darksend requires at least %1 to use.</source>
-        <translation>Darksend requires at least %1 to use.</translation>
+        <source>PrivSend requires at least %1 to use.</source>
+        <translation>PrivSend requires at least %1 to use.</translation>
     </message>
     <message>
         <location line="+14"/>
-        <source>Wallet is locked and user declined to unlock. Disabling Darksend.</source>
-        <translation>Wallet is locked and user declined to unlock. Disabling Darksend.</translation>
+        <source>Wallet is locked and user declined to unlock. Disabling PrivSend.</source>
+        <translation>Wallet is locked and user declined to unlock. Disabling PrivSend.</translation>
     </message>
 </context>
 <context>
@@ -3015,8 +3015,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+38"/>
-        <source>Darksend</source>
-        <translation>Darksend</translation>
+        <source>PrivSend</source>
+        <translation>PrivSend</translation>
     </message>
     <message>
         <location line="+19"/>
@@ -3083,8 +3083,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>(darksend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(darksend requires this amount to be rounded up to the nearest %1).</translation>
+        <source>(PrivSend requires this amount to be rounded up to the nearest %1).</source>
+        <translation>(PrivSend requires this amount to be rounded up to the nearest %1).</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -3513,7 +3513,7 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>The Ulord Core developers</source>
+        <source>Ulord Foundation Ltd.</source>
         <translation>The Ulord Foundation</translation>
     </message>
     <message>
@@ -3868,8 +3868,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Received via Darksend</source>
-        <translation>Received via Darksend</translation>
+        <source>Received via PrivSend</source>
+        <translation>Received via PrivSend</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -3888,28 +3888,28 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Darksend Denominate</source>
-        <translation>Darksend Denominate</translation>
+        <source>PrivSend Denominate</source>
+        <translation>PrivSend Denominate</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksend Collateral Payment</source>
-        <translation>Darksend Collateral Payment</translation>
+        <source>PrivSend Collateral Payment</source>
+        <translation>PrivSend Collateral Payment</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksend Make Collateral Inputs</source>
-        <translation>Darksend Make Collateral Inputs</translation>
+        <source>PrivSend Make Collateral Inputs</source>
+        <translation>PrivSend Make Collateral Inputs</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksend Create Denominations</source>
-        <translation>Darksend Create Denominations</translation>
+        <source>PrivSend Create Denominations</source>
+        <translation>PrivSend Create Denominations</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Privsent</source>
+        <translation>Privsent</translation>
     </message>
     <message>
         <location line="+30"/>
@@ -4007,28 +4007,28 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksent</source>
-        <translation>Darksent</translation>
+        <source>Privsent</source>
+        <translation>Privsent</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Darksend Make Collateral Inputs</source>
-        <translation>Darksend Make Collateral Inputs</translation>
+        <source>PrivSend Make Collateral Inputs</source>
+        <translation>PrivSend Make Collateral Inputs</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Darksend Create Denominations</source>
-        <translation>Darksend Create Denominations</translation>
+        <source>PrivSend Create Denominations</source>
+        <translation>PrivSend Create Denominations</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Darksend Denominate</source>
-        <translation>Darksend Denominate</translation>
+        <source>PrivSend Denominate</source>
+        <translation>PrivSend Denominate</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Darksend Collateral Payment</source>
-        <translation>Darksend Collateral Payment</translation>
+        <source>PrivSend Collateral Payment</source>
+        <translation>PrivSend Collateral Payment</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4189,8 +4189,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     <message>
         <location line="-20"/>
         <location line="+9"/>
-        <source>InstantX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 ULD.</source>
-        <translation>InstantX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 ULD.</translation>
+        <source>InstantX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 UT.</source>
+        <translation>InstantX doesn&apos;t support sending values that high yet. Transactions are currently limited to %1 UT.</translation>
     </message>
 </context>
 <context>
@@ -4255,8 +4255,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+12"/>
-        <source>Darksend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>Darksend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</translation>
+        <source>PrivSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
+        <translation>PrivSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</translation>
     </message>
     <message>
         <location line="+18"/>
@@ -4325,13 +4325,13 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Unable to locate enough Darksend denominated funds for this transaction.</source>
-        <translation>Unable to locate enough Darksend denominated funds for this transaction.</translation>
+        <source>Unable to locate enough PrivSend denominated funds for this transaction.</source>
+        <translation>Unable to locate enough PrivSend denominated funds for this transaction.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 ULD.</source>
-        <translation>Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 ULD.</translation>
+        <source>Unable to locate enough PrivSend non-denominated funds for this transaction that are not equal 1000 UT.</source>
+        <translation>Unable to locate enough PrivSend non-denominated funds for this transaction that are not equal 1000 UT.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -4455,8 +4455,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>Darksend options:</source>
-        <translation>Darksend options:</translation>
+        <source>PrivSend options:</source>
+        <translation>PrivSend options:</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4545,8 +4545,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Error: You already have pending entries in the Darksend pool</source>
-        <translation>Error: You already have pending entries in the Darksend pool</translation>
+        <source>Error: You already have pending entries in the PrivSend pool</source>
+        <translation>Error: You already have pending entries in the PrivSend pool</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4610,8 +4610,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Disable all Ulord specific functionality (Masternodes, Darksend, InstantX, Budgeting) (0-1, default: %u)</source>
-        <translation>Disable all Ulord specific functionality (Masternodes, Darksend, InstantX, Budgeting) (0-1, default: %u)</translation>
+        <source>Disable all Ulord specific functionality (Masternodes, PrivSend, InstantX, Budgeting) (0-1, default: %u)</source>
+        <translation>Disable all Ulord specific functionality (Masternodes, PrivSend, InstantX, Budgeting) (0-1, default: %u)</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4625,8 +4625,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Enable use of automated darksend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Enable use of automated darksend for funds stored in this wallet (0-1, default: %u)</translation>
+        <source>Enable use of automated PrivSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Enable use of automated PrivSend for funds stored in this wallet (0-1, default: %u)</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -4635,13 +4635,13 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+12"/>
-        <source>Fees (in ULD/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Fees (in ULD/Kb) smaller than this are considered zero fee for relaying (default: %s)</translation>
+        <source>Fees (in UT/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
+        <translation>Fees (in UT/Kb) smaller than this are considered zero fee for relaying (default: %s)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Fees (in ULD/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Fees (in ULD/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</translation>
+        <source>Fees (in UT/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
+        <translation>Fees (in UT/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4700,8 +4700,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Provide liquidity to Darksend by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
-        <translation>Provide liquidity to Darksend by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</translation>
+        <source>Provide liquidity to PrivSend by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
+        <translation>Provide liquidity to PrivSend by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -4755,8 +4755,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+20"/>
-        <source>Unable to locate enough funds for this transaction that are not equal 1000 ULD.</source>
-        <translation>Unable to locate enough funds for this transaction that are not equal 1000 ULD.</translation>
+        <source>Unable to locate enough funds for this transaction that are not equal 1000 UT.</source>
+        <translation>Unable to locate enough funds for this transaction that are not equal 1000 UT.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -4847,18 +4847,18 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksend is idle.</source>
-        <translation>Darksend is idle.</translation>
+        <source>PrivSend is idle.</source>
+        <translation>PrivSend is idle.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Darksend request complete:</source>
-        <translation>Darksend request complete:</translation>
+        <source>PrivSend request complete:</source>
+        <translation>PrivSend request complete:</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Darksend request incomplete:</source>
-        <translation>Darksend request incomplete:</translation>
+        <source>PrivSend request incomplete:</source>
+        <translation>PrivSend request incomplete:</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -4897,8 +4897,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+5"/>
-        <source>Fee (in ULD/kB) to add to transactions you send (default: %s)</source>
-        <translation>Fee (in ULD/kB) to add to transactions you send (default: %s)</translation>
+        <source>Fee (in UT/kB) to add to transactions you send (default: %s)</source>
+        <translation>Fee (in UT/kB) to add to transactions you send (default: %s)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5022,8 +5022,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+11"/>
-        <source>Last successful Darksend action was too recent.</source>
-        <translation>Last successful Darksend action was too recent.</translation>
+        <source>Last successful PrivSend action was too recent.</source>
+        <translation>Last successful PrivSend action was too recent.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5357,8 +5357,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+1"/>
-        <source>Keep N ULD anonymized (default: %u)</source>
-        <translation>Keep N ULD anonymized (default: %u)</translation>
+        <source>Keep N UT anonymized (default: %u)</source>
+        <translation>Keep N UT anonymized (default: %u)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5367,8 +5367,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+1"/>
-        <source>Last Darksend was too recent.</source>
-        <translation>Last Darksend was too recent.</translation>
+        <source>Last PrivSend was too recent.</source>
+        <translation>Last PrivSend was too recent.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -5587,8 +5587,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+1"/>
-        <source>This is experimental software.</source>
-        <translation>This is experimental software.</translation>
+        <source>This is Ulord full-node wallet client</source>
+        <translation>This is Ulord full-node wallet client</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5682,8 +5682,8 @@ for example: alertnotify=echo %%s | mail -s &quot;Ulord Alert&quot; admin@foo.co
     </message>
     <message>
         <location line="+1"/>
-        <source>Value more than Darksend pool maximum allows.</source>
-        <translation>Value more than Darksend pool maximum allows.</translation>
+        <source>Value more than PrivSend pool maximum allows.</source>
+        <translation>Value more than PrivSend pool maximum allows.</translation>
     </message>
     <message>
         <location line="+1"/>

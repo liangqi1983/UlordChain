@@ -28,6 +28,7 @@ SignVerifyMessageDialog::SignVerifyMessageDialog(const PlatformStyle *platformSt
     platformStyle(platformStyle)
 {
     ui->setupUi(this);
+    this->setWindowFlags(Qt::Dialog|Qt::WindowCloseButtonHint);
 
 #if QT_VERSION >= 0x040700
     ui->signatureOut_SM->setPlaceholderText(tr("Click \"Sign Message\" to generate signature"));
@@ -41,10 +42,10 @@ SignVerifyMessageDialog::SignVerifyMessageDialog(const PlatformStyle *platformSt
     ui->verifyMessageButton_VM->setIcon(QIcon());
     ui->clearButton_VM->setIcon(QIcon());
 #else
-    ui->signMessageButton_SM->setIcon(QIcon(":/icons/" + theme + "/edit"));
-    ui->clearButton_SM->setIcon(QIcon(":/icons/" + theme + "/remove"));
-    ui->verifyMessageButton_VM->setIcon(QIcon(":/icons/" + theme + "/transaction_0"));
-    ui->clearButton_VM->setIcon(QIcon(":/icons/" + theme + "/remove"));
+    // ui->signMessageButton_SM->setIcon(QIcon(":/icons/" + theme + "/edit"));
+    // ui->clearButton_SM->setIcon(QIcon(":/icons/" + theme + "/remove"));
+    // ui->verifyMessageButton_VM->setIcon(QIcon(":/icons/" + theme + "/transaction_0"));
+    // ui->clearButton_VM->setIcon(QIcon(":/icons/" + theme + "/remove"));
 #endif
 
     // These icons are needed on Mac also

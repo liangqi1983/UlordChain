@@ -15,8 +15,11 @@
 using namespace std;
 
 class CMasternodeMan;
+class CMasternodeCenter;
 
 extern CMasternodeMan mnodeman;
+extern CMasternodeCenter mnodecenter;
+
 
 /**
  * Provides a forward and reverse index between MN vin's and integers.
@@ -164,7 +167,7 @@ public:
     std::map<uint256, CMasternodePing> mapSeenMasternodePing;
     // Keep track of all verifications I've seen
     std::map<uint256, CMasternodeVerification> mapSeenMasternodeVerification;
-    // keep track of dsq count to prevent masternodes from gaming darksend queue
+    // keep track of dsq count to prevent masternodes from gaming privsend queue
     int64_t nDsqCount;
 
 
@@ -204,9 +207,6 @@ public:
     /// Add an entry
     bool Add(CMasternode &mn);
     
-    /// Check and activate the master node.
-    bool CheckActiveMaster(CMasternode &mn);
-
     /// Ask (source) node for mnb
     void AskForMN(CNode *pnode, const CTxIn &vin);
     void AskForMnb(CNode *pnode, const uint256 &hash);
@@ -376,12 +376,13 @@ public:
 // master node  quest  master register center  about master node info
 #define Center_Server_Version 7001
 #define Center_Server_VerFlag "ver"
-#define Center_Server_IP "118.190.150.58"
-#define Center_Server_Port "3009"
+//#define Center_Server_IP "118.190.150.58"
+//#define Center_Server_Port "3009"
 #define MasterNodeCoin 10000 
 #define WaitTimeOut (60*5)
 #define MAX_LENGTH 65536
 #define Length_Of_Char 5
+#define LIMIT_MASTERNODE_LICENSE  172800  //Update the certificate two days in advance
 
 /*extern bool CheckMasterInfoOfTx(CTxIn &vin);
 extern bool InitAndConnectOfSock(std::string&str);
@@ -392,51 +393,63 @@ static bool b_Used= false;*/
 enum MST_QUEST  
 {
     MST_QUEST_ONE=1,
-    MST_QUEST_ALL=2
-
+    MST_QUEST_KEY=2
 };
 
 // master node quest version The type of message requested to the central server.
-class  mstnodequest
+class mstnodequest
 {
 public:
-    mstnodequest(int version, MST_QUEST  type  ):_msgversion(version), _questtype(type)
-    {
-       _verfyflag=std::string("#$%@");  
-       
-    }  
+    mstnodequest(int version, MST_QUEST  type  ):_msgversion(version), _questtype(type){}  
     mstnodequest(){}
     int        _msgversion; 	
     int        _questtype;
 	int64_t    _timeStamps;
-    std::string     _verfyflag;
-    std::string     _masteraddr;
+    //std::string     _verfyflag;
+    //std::string     _masteraddr;
+    std::string     _txid;
+	unsigned int    _voutid;
+
+    /*keep this serialize function for old version*/
     friend class boost::serialization::access;
-    
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version)
     {  
-        ar & _verfyflag;
+        //sar & _verfyflag;
         ar & _msgversion;
 		ar & _timeStamps;
         ar & _questtype;
-        ar & _masteraddr;
+        ar & _txid;
+		ar & _voutid;
+        //ar & _masteraddr;
         //ar & _llAmount;  
     }  
-    int GetVersion() const {return _msgversion;}  
-    int GetQuestType() const {return _questtype;}  
-    void  SetMasterAddr(std::string addr){ _masteraddr=addr;}
+    int GetVersion() const {return _msgversion;}
+    int GetQuestType() const {return _questtype;}
+	int GetMsgBuf(char * buf);
+    int GetMsgBufNew(char * buf);
+
+    /*serialize without boost*/
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(_msgversion);
+		READWRITE(_timeStamps);
+        READWRITE(_questtype);
+        READWRITE(_txid);
+		READWRITE(_voutid);
+    }
 };
 
 //extern mstnodequest RequestMsgType(Center_Server_Version,MST_QUEST::MST_QUEST_ONE);
 
 // master node quest version 
-class  mstnoderes
+class mstnoderes
 {
 public:
     mstnoderes(int version  ):_msgversion(version)
     {
-       _verfyflag=std::string("#$%@");
        _num=1;
     }
 
@@ -444,81 +457,185 @@ public:
 
     int             _msgversion;
     int             _num;
-    std::string     _verfyflag;
-    std::string     _signstr;
-    friend class boost::serialization::access;
+    int             _nodetype;
 
+    /*keep this serialize function for old version*/
+    friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version)
     {
-        ar & _verfyflag;
+        //ar & _verfyflag;
         ar & _msgversion;
         ar & _num;
-        ar & _signstr;  // ʹ�� ��ѯ�ĵ�һ����ַ��ǩ��  �� 
-        //ar & _llAmount;  
+        ar & _nodetype;
     }
     int GetVersion() const {return _msgversion;}
     int GetNum() const {return _num;}
+
+    /*serialize without boost*/
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(_msgversion);
+		READWRITE(_num);
+        READWRITE(_nodetype);
+    }
 };
 //extern mstnoderes RetMsgType;
+class CcenterKeyData
+{
+public:
+    CcenterKeyData(){}
+    CcenterKeyData(int version, std::string strkey):_keyversion(version),_key(strkey){}
+
+    int             _keyversion;
+    std::string     _key;
+
+    /*keep this serialize function for old version*/
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & _keyversion;
+        ar & _key;
+    }
+
+    /*serialize without boost*/
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(_keyversion);
+		READWRITE(_key);
+    }
+};
 
 //Data used to receive the central server.
+/*
+1    `id` BIGINT (20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+2	 `gmt_create` BIGINT (20) NOT NULL COMMENT '创建时间',
+3	 `gmt_modify` BIGINT (20) NOT NULL COMMENT '修改时间',
+4	 `user_id` VARCHAR (32) DEFAULT NULL,
+5	 `major_node_nickname` VARCHAR (64) DEFAULT NULL COMMENT '主节点昵称',
+6	 `trade_txid` VARCHAR (64) DEFAULT NULL COMMENT '1万UT交易ID',
+7	 `trade_vout_no` VARCHAR (64) DEFAULT NULL COMMENT '1万UT交易ID对应的Vout序号',
+8	 `ip_address` VARCHAR (64) DEFAULT NULL COMMENT '主节点IP地址',
+9	 `special_code` VARCHAR (255) DEFAULT NULL COMMENT '主节点特征码',
+10	 `status` INT (3) DEFAULT '0' COMMENT '状态,0:绑定中,1:绑定确认成功,2.绑定确认失败',
+11	 `validflag` INT (3) DEFAULT '0' COMMENT '有效标志位,0为无效标志，1为有效，不由用户填写' 
+12	 `validdate` BIGINT (20) DEFAULT '0' COMMENT '签证的有效期 validflag=1有效 必填',  
+13	 `certificate` VARCHAR (255) DEFAULT NULL COMMENT '证书',
+14	 `ut_addr` VARCHAR (255) DEFAULT NULL COMMENT 'Ulord地址',
+15   'balance' DECIMAL (20, 5) DEFAULT "0.00000" COMMENT '主节点锁定币的数量',
+16	 `remark` VARCHAR (255) DEFAULT NULL COMMENT '绑定确认失败原因',
+17	 `audit_num` INT (3) NOT NULL DEFAULT '0' COMMENT '绑定确认次数',
+18	 `auditor` VARCHAR (32) DEFAULT NULL COMMENT '绑定确认审核人',
+19	 `gmt_audit` BIGINT (20) DEFAULT NULL COMMENT '绑定确认审核时间',
+20   `node_period' BIGINT (20) DEFAULT NULL COMMENT '节点有效时间',
+21   `cert_version' INT (3) DEFAULT '0' COMMENT '节点有效时间',
+22	 `ext_info` VARCHAR (255) DEFAULT NULL COMMENT '扩展信息',
+ */
 class CMstNodeData  
 {  
-private:  
-    friend class boost::serialization::access;  
-  
+private:
+    /*keep this serialize function for old version*/
+    friend class boost::serialization::access;
     template<class Archive>  
     void serialize(Archive& ar, const unsigned int version)  
-    {  
-        ar & _version;  
-        ar & _masteraddr;  
-        //ar & _txid;  
-        ar & _hostname;  
-        ar & _hostip;  
-        ar & _validflag;
-        //ar & _llAmount;  
+    {
+        ar & _version;
+        ar & _txid;
+		ar & _voutid;
+        ar & _privkey;
+        ar & _status;
+        ar & _licversion;
+		ar & _licperiod;
+		ar & _licence;
+        ar & _nodeperiod; 
     }  
-/*addr char(50) not null primary key,
-amount bigint NOT NULL DEFAULT '0',
-txid       char(50) null,
-hostname   char(50) NULL DEFAULT ' ',
-ip         char(50) NULL DEFAULT ' ',
-disksize     int NOT NULL DEFAULT '0',
-netsize      int NOT NULL DEFAULT '0',
-cpusize      int NOT NULL DEFAULT '0',
-ramsize      int NOT NULL DEFAULT '0',
-score        int NOT NULL DEFAULT '0',
- */ 
       
 public:  
-    CMstNodeData():_version(0), _masteraddr(""){}  
-  
-    CMstNodeData(int version, std::string addr):_version(version), _masteraddr(addr){}  
-  
-    int GetVersion() const {return _version;}  
-    int GetValidFlag() const {return _validflag;}  
-    std::string GetMasterAddr() const {return _masteraddr;}  
+    CMstNodeData():_version(0), _txid(""), _voutid(0), _licversion(1){}
+    CMstNodeData(int version, std::string txid, unsigned int voutid):_version(version), _txid(txid), _voutid(voutid), _licversion(1){}
+	CMstNodeData(const CMasternode & mn);
+	CMstNodeData(const CMasternodePing & mn);
+
+	uint256 GetLicenseWord();
+    bool VerifyLicense();
+    bool IsNeedUpdateLicense();
 
     CMstNodeData & operator=(CMstNodeData &b)
     {
         _version   = b._version;
-        _masteraddr= b._masteraddr;
-        _hostname  = b._hostname;
-        _hostip    = b._hostip;
-        _validflag = b._validflag;
+        _txid      = b._txid;
+		_voutid    = b._voutid;
+        _privkey   = b._privkey;
+        _status    = b._status;
+        _licversion   = b._licversion;
+		_licperiod = b._licperiod;
+		_licence   = b._licence;
+        _nodeperiod= b._nodeperiod;
+        _pubkey    = b._pubkey;
         return * this;
     }
-public:  
-    int _version;  
-    std::string _masteraddr; // node addr
-    std::string _txid;      //  
-    std::string _hostname;  // 
-    std::string _hostip;    // 
-    int         _validflag; //
-    int         _time;
-    long long   _llAmount;  // 
-    std::string _text;  
+public:
+    int          _version;  
+    std::string  _txid;       //
+    unsigned int _voutid;
+    std::string  _privkey;
+    int          _status;
+    int          _licversion;  //
+    int64_t      _licperiod;  //licence period
+    std::string  _licence;    //licence
+    int64_t      _nodeperiod;
+    /**/
+    unsigned int _time;       //read db time
+    CPubKey  _pubkey;
+
+    /*serialize without boost*/
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(_version);
+		READWRITE(_txid);
+        READWRITE(_voutid);
+        READWRITE(_privkey);
+		READWRITE(_status);
+        READWRITE(_licversion);
+        READWRITE(_licperiod);
+		READWRITE(_licence);
+        READWRITE(_nodeperiod);
+    }
 };  
+
+class CMasternodeCenter
+{
+public:
+    typedef std::map <int, std::string> map_t;
+    typedef typename map_t::iterator map_it;
+    typedef typename map_t::const_iterator map_cit;
+private:
+    CService service_;
+    map_t mapVersionPubkey_;
+    int licenseVersion_;
+    bool isUse_;
+public:
+    CMasternodeCenter():isUse_(false){}
+    bool InitCenter(std::string strError);
+    std::string GetCenterPubKey(int version);
+    bool IsUse();
+    bool CheckLicensePeriod(CMasternode &mn);
+    bool VerifyLicense(const CMasternode &mn);
+    bool VerifyLicense(const CMasternodePing &mnp);
+    bool LoadLicense(CMasternode &mn);
+private:
+    void SavePubkey();
+    void SaveLicense(const CMasternode &mn);
+    bool RequestLicense(CMasternode &mn);
+    bool ReadLicense(CMasternode &mn);
+    bool RequestCenterKey();
+};
 
 #endif

@@ -85,6 +85,7 @@ private:
 
     UnitDisplayStatusBarControl *unitDisplayControl;
     QLabel *labelEncryptionIcon;
+    QLabel *labelSpace;
     QPushButton *labelConnectionsIcon;
     QLabel *labelBlocksIcon;
     QLabel *progressBarLabel;
@@ -119,7 +120,7 @@ private:
     QAction *openPeersAction;
     QAction *openRepairAction;
     QAction *openConfEditorAction;
-    QAction *openMNConfEditorAction;
+
     QAction *showBackupsAction;
     QAction *openAction;
     QAction *showHelpMessageAction;
@@ -232,8 +233,7 @@ private Q_SLOTS:
 
     /** Open external (default) editor with ulord.conf */
     void showConfEditor();
-    /** Open external (default) editor with masternode.conf */
-    void showMNConfEditor();
+
     /** Show folder with wallet backups in default file browser */
     void showBackups();
 

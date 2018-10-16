@@ -1,13 +1,49 @@
 What is Ulord ?
 -------------
+           uuu                              
+       uuuuuuuuuuu                          
+      uuuuuuuuuuuuu                         
+      uuuuuuuuuuuuu                         
+      uuuuuuuuuuuuu                         
+      uuuuuuuuuuuuu                         
+      uuuuuuuuuuuuu                  u      
+      uuuuuuuuuuuuu             uuuuuuuuuu  
+      uuuuuuuuuuuuu             uuuuuuuuuuuu
+      uuuuuuuuuuuuu                uuuuuuuuu
+      uuuuuuuuuuuuu                  uuuuuuu
+      uuuuuuuuuuuuu                  uuuuuuu
+      uuuuuuuuuuuuu                  uuuuuuu
+      uuuuuuuuuuuuu                  uuuuuuu
+      uuuuuuuuuuuuu                  uuuuuuu
+      uuuuuuuu      uuuuuuuuu        uuuuuuu
+      uuuuu   uuuuuuuuuuu   u        uuuuuuu
+       uu  uuuuuuuuu       uu        uuuuuuu
+       uuuuuuuu         uu        uuuuuuu 
+      uuuuuuu          uu        uuuuuuuu 
+     uuuuuuu        uuuu         uuuuuuu  
+    uuuuuuu        uuu         uuuuuuu    
+    uuuuuuu        uu          uuuuuu   u  
+    uuuuuuu       uu        uuuuuu    uuu  
+    uuuuuu        uu    uuuuuuu    uuuuuu  
+    uuuuuuu           uuuuu      uuuuuuuuu  
+    uuuuuuu                  uuuuuuuuuuuuu  
+    uuuuuuu                 uuuuuuuuuuuuuu  
+    uuuuuuu                 uuuuuuuuuuuuuu  
+    uuuuuuu                 uuuuuuuuuuuuuu  
+    uuuuuuu                 uuuuuuuuuuuuuu  
+    uuuuuuu                 uuuuuuuuuuuuuu  
+    uuuuuuu                 uuuuuuuuuuuuuu  
+       uuuu                 uuuuuuuuuuuuuu  
+                            uuuuuuuuuuuuuu  
+                            uuuuuuuuuuuuuu  
+                             uuuuuuuuuuuuu  
+                                 uuuuuu     
+
 
 Ulord is a P2P value delivery public chain. Through building its blockchain underlying architecture and digital resource distribution protocols, it enables third-party developers to explore their own applications over open-source agreements to form a complete ecology of blockchain technology and applications. Based on various rules and protocols created by Ulord, it loads various types of digital resource application scenarios including text, pictures, music, video and software, providing a direct docking platform for information creators and consumers.
 
 UlordChain Documentation and Usage Resources
 ---------------
-
-![](http://ulord.one/images/ulordCnter.png)
-
 Resources may be helpful to know about Ulord.
 
 Basic usage resources:
@@ -23,8 +59,8 @@ General Info about Ulord:
 What is UlordChain?
 ------------------
 
-UlordChain is the basic layer of Ulord, a decentralized featured blockchain based on Dash Core, which supports 
-intermediate layer and top application layer commands.
+UlordChain is a infrastructure chain layer and adopts the mixed consensus mechanism of POW and POS.It supports the intermediate layer and top application layer of the Ulord.
+UlordChain is the infrastructure of the whole ecosystem.
 
 Building UlordChain
 -------------------
@@ -37,6 +73,7 @@ Install dependency
 
     sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils
     sudo apt-get install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+    sudo apt-get install software-properties-common
     sudo add-apt-repository ppa:bitcoin/bitcoin
     sudo apt-get update
     sudo apt-get install libdb4.8-dev libdb4.8++-dev
@@ -56,7 +93,8 @@ Configure and build
 
 ### Run
 
-    cd src && ./ulordd -daemon # use ./ulord-cli to make rpc call
+    cd src && ./ulordd -daemon 
+    #You can use ./ulord-cli help  to obtain Ulord's commands.
 
 Development Process
 -------------------
@@ -68,6 +106,4 @@ Issues and commit changes are welcome.
 
 Testing
 -------
-
-Tests are placed in /tests directory.
-
+You can find the unit test cases [here](./src/test).

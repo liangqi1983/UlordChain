@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "activemasternode.h"
-#include "darksend.h"
+#include "privsend.h"
 #include "init.h"
 #include "main.h"
 #include "masternode-payments.h"
@@ -17,6 +17,8 @@
 #include <fstream>
 #include <iomanip>
 #include <univalue.h>
+#include <boost/lexical_cast.hpp>
+#include "privsend.h"
 
 void EnsureWalletIsUnlocked();
 
@@ -41,8 +43,8 @@ UniValue privatesend(const UniValue& params, bool fHelp)
             return "Mixing is not supported from masternodes";
 
         fEnablePrivateSend = true;
-        bool result = darkSendPool.DoAutomaticDenominating();
-        return "Mixing " + (result ? "started successfully" : ("start failed: " + darkSendPool.GetStatus() + ", will retry"));
+        bool result = privSendPool.DoAutomaticDenominating();
+        return "Mixing " + (result ? "started successfully" : ("start failed: " + privSendPool.GetStatus() + ", will retry"));
     }
 
     if(params[0].get_str() == "stop") {
@@ -51,7 +53,7 @@ UniValue privatesend(const UniValue& params, bool fHelp)
     }
 
     if(params[0].get_str() == "reset") {
-        darkSendPool.ResetPool();
+        privSendPool.ResetPool();
         return "Mixing was reset";
     }
 
@@ -66,15 +68,15 @@ UniValue getpoolinfo(const UniValue& params, bool fHelp)
             "Returns an object containing mixing pool related information.\n");
 
     UniValue obj(UniValue::VOBJ);
-    obj.push_back(Pair("state",             darkSendPool.GetStateString()));
+    obj.push_back(Pair("state",             privSendPool.GetStateString()));
     obj.push_back(Pair("mixing_mode",       fPrivateSendMultiSession ? "multi-session" : "normal"));
-    obj.push_back(Pair("queue",             darkSendPool.GetQueueSize()));
-    obj.push_back(Pair("entries",           darkSendPool.GetEntriesCount()));
-    obj.push_back(Pair("status",            darkSendPool.GetStatus()));
+    obj.push_back(Pair("queue",             privSendPool.GetQueueSize()));
+    obj.push_back(Pair("entries",           privSendPool.GetEntriesCount()));
+    obj.push_back(Pair("status",            privSendPool.GetStatus()));
 
-    if (darkSendPool.pSubmittedToMasternode) {
-        obj.push_back(Pair("outpoint",      darkSendPool.pSubmittedToMasternode->vin.prevout.ToStringShort()));
-        obj.push_back(Pair("addr",          darkSendPool.pSubmittedToMasternode->addr.ToString()));
+    if (privSendPool.pSubmittedToMasternode) {
+        obj.push_back(Pair("outpoint",      privSendPool.pSubmittedToMasternode->vin.prevout.ToStringShort()));
+        obj.push_back(Pair("addr",          privSendPool.pSubmittedToMasternode->addr.ToString()));
     }
 
     if (pwalletMain) {
@@ -86,7 +88,11 @@ UniValue getpoolinfo(const UniValue& params, bool fHelp)
     return obj;
 }
 
-
+typedef std::pair<std::string, int> WINPAIR;
+bool cmp_by_value(const WINPAIR& lhs, const WINPAIR& rhs)
+{
+	return lhs.second == rhs.second ? lhs.first < rhs.first : lhs.second > rhs.second;
+}
 UniValue masternode(const UniValue& params, bool fHelp)
 {
     std::string strCommand;
@@ -101,7 +107,7 @@ UniValue masternode(const UniValue& params, bool fHelp)
         (strCommand != "start" && strCommand != "start-alias" && strCommand != "start-all" && strCommand != "start-missing" &&
          strCommand != "start-disabled" && strCommand != "list" && strCommand != "list-conf" && strCommand != "count" &&
          strCommand != "debug" && strCommand != "current" && strCommand != "winner" && strCommand != "winners" && strCommand != "genkey" &&
-         strCommand != "connect" && strCommand != "outputs" && strCommand != "status"))
+         strCommand != "connect" && strCommand != "outputs" && strCommand != "status"  && strCommand != "license"))
             throw std::runtime_error(
                 "masternode \"command\"... ( \"passphrase\" )\n"
                 "Set of commands to execute masternode related actions\n"
@@ -115,13 +121,14 @@ UniValue masternode(const UniValue& params, bool fHelp)
                 "  genkey       - Generate new masternodeprivkey\n"
                 "  outputs      - Print masternode compatible outputs\n"
                 "  start        - Start local Hot masternode configured in ulord.conf\n"
-                "  start-alias  - Start single remote masternode by assigned alias configured in masternode.conf\n"
-                "  start-<mode> - Start remote masternodes configured in masternode.conf (<mode>: 'all', 'missing', 'disabled')\n"
+                "  start-alias  - Start single remote masternode by assigned alias configured in ulord.conf\n"
+                "  start-<mode> - Start remote masternodes configured in ulord.conf (<mode>: 'all', 'missing', 'disabled')\n"
                 "  status       - Print masternode status information\n"
                 "  list         - Print list of all known masternodes (see masternodelist for more info)\n"
-                "  list-conf    - Print masternode.conf in JSON format\n"
+                "  list-conf    - Print ulord.conf in JSON format\n"
                 "  winner       - Print info on next masternode winner to vote for\n"
                 "  winners      - Print list of masternode winners\n"
+                "  license      - Print masternode register license\n"
                 );
 
     if (strCommand == "list")
@@ -197,7 +204,7 @@ UniValue masternode(const UniValue& params, bool fHelp)
         obj.push_back(Pair("IP:port",       winner->addr.ToString()));
         obj.push_back(Pair("protocol",      (int64_t)winner->nProtocolVersion));
         obj.push_back(Pair("vin",           winner->vin.prevout.ToStringShort()));
-        obj.push_back(Pair("payee",         CBitcoinAddress(winner->pubKeyCollateralAddress.GetID()).ToString()));
+        obj.push_back(Pair("payee",         CBitcoinAddress(winner->GetPayeeDestination()).ToString()));
         obj.push_back(Pair("lastseen",      (winner->lastPing == CMasternodePing()) ? winner->sigTime :
                                                     winner->lastPing.sigTime));
         obj.push_back(Pair("activeseconds", (winner->lastPing == CMasternodePing()) ? 0 :
@@ -214,8 +221,6 @@ UniValue masternode(const UniValue& params, bool fHelp)
         CPubKey pubkey;
         CKey key;
 
-        if(!pwalletMain || !pwalletMain->GetMasternodeVinAndKeys(vin, pubkey, key))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing masternode input, please look at the documentation for instructions on masternode creation");
 
         return activeMasternode.GetStatus();
     }
@@ -262,6 +267,14 @@ UniValue masternode(const UniValue& params, bool fHelp)
                 CMasternodeBroadcast mnb;
 
                 bool fResult = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+                if( fResult ) {
+                    fResult = CBitcoinAddress().Set(mnb.GetPayeeDestination());
+                }
+                
+                if( fResult ) 
+                {
+                    fResult = mnodecenter.LoadLicense(mnb);         
+                }
 
                 statusObj.push_back(Pair("result", fResult ? "successful" : "failed"));
                 if(fResult) {
@@ -311,6 +324,14 @@ UniValue masternode(const UniValue& params, bool fHelp)
             if(strCommand == "start-disabled" && pmn && pmn->IsEnabled()) continue;
 
             bool fResult = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb);
+            if( fResult ) {
+                fResult = CBitcoinAddress().Set(mnb.GetPayeeDestination());
+            }
+              
+            if( fResult ) 
+            {
+                fResult = mnodecenter.LoadLicense(mnb);         
+            }
 
             UniValue statusObj(UniValue::VOBJ);
             statusObj.push_back(Pair("alias", mne.getAlias()));
@@ -370,7 +391,7 @@ UniValue masternode(const UniValue& params, bool fHelp)
     if (strCommand == "outputs") {
         // Find possible candidates
         std::vector<COutput> vPossibleCoins;
-        pwalletMain->AvailableCoins(vPossibleCoins, true, NULL, false, ONLY_1000);
+        pwalletMain->AvailableCoins(vPossibleCoins, true, NULL, false, ONLY_10000);
 
         UniValue obj(UniValue::VOBJ);
         BOOST_FOREACH(COutput& out, vPossibleCoins) {
@@ -390,10 +411,22 @@ UniValue masternode(const UniValue& params, bool fHelp)
 
         mnObj.push_back(Pair("vin", activeMasternode.vin.ToString()));
         mnObj.push_back(Pair("service", activeMasternode.service.ToString()));
+        mnObj.push_back(Pair("publickey", HexStr(activeMasternode.pubKeyMasternode).c_str()));
 
         CMasternode mn;
         if(mnodeman.Get(activeMasternode.vin, mn)) {
-            mnObj.push_back(Pair("payee", CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
+            mnObj.push_back(Pair("payee", CBitcoinAddress(mn.GetPayeeDestination()).ToString()));
+            mnObj.push_back(Pair("license version", mn.certifyVersion));
+            mnObj.push_back(Pair("license period", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", mn.certifyPeriod)));
+            mnObj.push_back(Pair("license data", mn.certificate));
+            if(mn.certifyPeriod <= GetTime())
+            {
+                mnObj.push_back(Pair("license status", "expire"));
+            }
+            else 
+            {
+                mnObj.push_back(Pair("license status", "enable"));
+            }
         }
 
         mnObj.push_back(Pair("status", activeMasternode.GetStatus()));
@@ -420,6 +453,27 @@ UniValue masternode(const UniValue& params, bool fHelp)
 
         if (params.size() == 3) {
             strFilter = params[2].get_str();
+			if (params.size() == 3) {
+            	strFilter = params[2].get_str();
+            	if(strFilter == "status" && nLast == 0) {
+                	UniValue obj(UniValue::VOBJ);
+                	std::map<std::string, int> mapStatus;
+                	for(int i = 57600; i < nHeight + 10; i++)
+                	{
+                   		std::string strPayment = GetRequiredPaymentsString(i, false);
+                   		if(mapStatus.count(strPayment) == 0)
+                       		mapStatus.insert(std::pair<std::string, int>(strPayment, 1));
+                   		else
+                   	    	mapStatus[strPayment]++;
+                	}
+					std::vector<WINPAIR>vecStatus(mapStatus.begin(), mapStatus.end());
+					std::sort(vecStatus.begin(), vecStatus.end(), cmp_by_value);
+                	for(auto i:vecStatus)
+                   		obj.push_back(Pair(i.first, i.second));
+					obj.push_back(Pair("Total", vecStatus.size()));
+                	return obj;
+            	}
+        	}
         }
 
         if (params.size() > 3)
@@ -434,6 +488,37 @@ UniValue masternode(const UniValue& params, bool fHelp)
         }
 
         return obj;
+    }
+    
+    if (strCommand == "license")    //add check Ucenter certificate infomation
+    {
+        if (!fMasterNode)
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "This is not a masternode");
+    
+        UniValue mnObj(UniValue::VOBJ);
+
+        CMasternode mn;
+        if(mnodeman.Get(activeMasternode.vin, mn)) 
+        {
+            mnObj.push_back(Pair("license version", mn.certifyVersion));
+            mnObj.push_back(Pair("license period", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", mn.certifyPeriod)));
+            mnObj.push_back(Pair("license data", mn.certificate));
+
+            if(mn.certifyPeriod <= GetTime())
+            {
+                mnObj.push_back(Pair("license status", "expire"));
+            }
+            else 
+            {
+                mnObj.push_back(Pair("license status", "enable"));
+            }
+        }
+        else
+        {
+            mnObj.push_back(Pair(("status"), activeMasternode.GetStatus()));
+        }
+
+        return mnObj;
     }
 
     return NullUniValue;
@@ -506,12 +591,12 @@ UniValue masternodelist(const UniValue& params, bool fHelp)
                 streamFull << std::setw(18) <<
                                mn.GetStatus() << " " <<
                                mn.nProtocolVersion << " " <<
-                               CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString() << " " <<
+                               CBitcoinAddress(mn.GetPayeeDestination()).ToString() << " " <<
                                (int64_t)mn.lastPing.sigTime << " " << std::setw(8) <<
                                (int64_t)(mn.lastPing.sigTime - mn.sigTime) << " " << std::setw(10) <<
                                mn.GetLastPaidTime() << " "  << std::setw(6) <<
                                mn.GetLastPaidBlock() << " " <<
-                               mn.addr.ToString();
+                               mn.addr.ToString() << " " << mn.certifyPeriod << " " << mn.certifyVersion;
                 std::string strFull = streamFull.str();
                 if (strFilter !="" && strFull.find(strFilter) == std::string::npos &&
                     strOutpoint.find(strFilter) == std::string::npos) continue;
@@ -526,7 +611,7 @@ UniValue masternodelist(const UniValue& params, bool fHelp)
                 if (strFilter !="" && strOutpoint.find(strFilter) == std::string::npos) continue;
                 obj.push_back(Pair(strOutpoint, (int64_t)mn.lastPing.sigTime));
             } else if (strMode == "payee") {
-                CBitcoinAddress address(mn.pubKeyCollateralAddress.GetID());
+                CBitcoinAddress address(mn.GetPayeeDestination());
                 std::string strPayee = address.ToString();
                 if (strFilter !="" && strPayee.find(strFilter) == std::string::npos &&
                     strOutpoint.find(strFilter) == std::string::npos) continue;
@@ -578,8 +663,8 @@ UniValue masternodebroadcast(const UniValue& params, bool fHelp)
                 "1. \"command\"        (string or set of strings, required) The command to execute\n"
                 "2. \"passphrase\"     (string, optional) The wallet passphrase\n"
                 "\nAvailable commands:\n"
-                "  create-alias  - Create single remote masternode broadcast message by assigned alias configured in masternode.conf\n"
-                "  create-all    - Create remote masternode broadcast messages for all masternodes configured in masternode.conf\n"
+                "  create-alias  - Create single remote masternode broadcast message by assigned alias configured in ulord.conf\n"
+                "  create-all    - Create remote masternode broadcast messages for all masternodes configured in ulord.conf\n"
                 "  decode        - Decode masternode broadcast message\n"
                 "  relay         - Relay masternode broadcast message to the network\n"
                 + HelpRequiringPassphrase());
@@ -613,6 +698,14 @@ UniValue masternodebroadcast(const UniValue& params, bool fHelp)
                 CMasternodeBroadcast mnb;
 
                 bool fResult = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb, true);
+                if( fResult ) {
+                    fResult = CBitcoinAddress().Set(mnb.GetPayeeDestination());
+                }
+                
+                if( fResult ) 
+                {
+                    fResult = mnodecenter.LoadLicense(mnb);         
+                }
 
                 statusObj.push_back(Pair("result", fResult ? "successful" : "failed"));
                 if(fResult) {
@@ -635,7 +728,7 @@ UniValue masternodebroadcast(const UniValue& params, bool fHelp)
         return statusObj;
 
     }
-
+// manual create mnb message and broadcast
     if (strCommand == "create-all")
     {
         // wait for reindex and/or import to finish
@@ -661,6 +754,15 @@ UniValue masternodebroadcast(const UniValue& params, bool fHelp)
             CMasternodeBroadcast mnb;
 
             bool fResult = CMasternodeBroadcast::Create(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError, mnb, true);
+
+            if( fResult ) {
+                fResult = CBitcoinAddress().Set(mnb.GetPayeeDestination());
+            }
+            
+            if( fResult ) 
+            {
+                fResult = mnodecenter.LoadLicense(mnb);         
+            }
 
             UniValue statusObj(UniValue::VOBJ);
             statusObj.push_back(Pair("alias", mne.getAlias()));
@@ -710,11 +812,15 @@ UniValue masternodebroadcast(const UniValue& params, bool fHelp)
                 resultObj.push_back(Pair("vin", mnb.vin.ToString()));
                 resultObj.push_back(Pair("addr", mnb.addr.ToString()));
                 resultObj.push_back(Pair("pubKeyCollateralAddress", CBitcoinAddress(mnb.pubKeyCollateralAddress.GetID()).ToString()));
+                resultObj.push_back(Pair("PayeeAddress", CBitcoinAddress(mnb.GetPayeeDestination()).ToString()));
                 resultObj.push_back(Pair("pubKeyMasternode", CBitcoinAddress(mnb.pubKeyMasternode.GetID()).ToString()));
                 resultObj.push_back(Pair("vchSig", EncodeBase64(&mnb.vchSig[0], mnb.vchSig.size())));
                 resultObj.push_back(Pair("sigTime", mnb.sigTime));
                 resultObj.push_back(Pair("protocolVersion", mnb.nProtocolVersion));
                 resultObj.push_back(Pair("nLastDsq", mnb.nLastDsq));
+                resultObj.push_back(Pair("nLicensePeriod", mnb.certifyPeriod));
+                resultObj.push_back(Pair("nLicense", mnb.certificate));
+                resultObj.push_back(Pair("nlicenseVersion", mnb.certifyVersion));
 
                 UniValue lastPingObj(UniValue::VOBJ);
                 lastPingObj.push_back(Pair("vin", mnb.lastPing.vin.ToString()));
@@ -792,3 +898,78 @@ UniValue masternodebroadcast(const UniValue& params, bool fHelp)
 
     return NullUniValue;
 }
+
+// sign mnp message 
+UniValue signmnpmessage(const UniValue& params, bool fHelp)
+{
+    
+    if (fHelp || params.size() != 3)
+        throw runtime_error(
+            "signmnpmessage \"privatekey\" \"masterkey\"  \"addr\" \n"
+            "\nSign a message with the private key of an address"
+            + HelpRequiringPassphrase() + "\n"
+            "\nArguments:\n"
+            "1. \"privatekey\"      (string, required) The collate key  to use for the private key.\n"
+            "2. \"masterkey\"       (string, required) The master key to create a signature of.\n"
+            "3. \"straddr\"         (string, required) The IPaddr to create a signature of.\n"
+            "\nResult:\n"
+            "\"signature\"          (string) The signature of the message encoded in base 64\n"
+            "\nExamples:\n"
+            "\nCreate the signature\n"
+            + HelpExampleCli("signmnpmessage", "\"privatekey\"   \"masterkey\"  \"addr\"  ")
+
+        );
+		
+
+    std::string strMessage;
+    std::string strError = "";
+
+    string strPrivkey = params[0].get_str();
+    string strMasterKey = params[1].get_str();
+    string straddr = params[2].get_str();
+	
+	CNetAddr netAddr(straddr);
+    CService Ipaddr(netAddr,0);
+
+	CKey         keyCollate; 
+	CPubKey      pubkeyCollate; 
+
+	CKey         keyMaster; 
+	CPubKey      pubkeyMaster; 
+	// std::string  privstr;
+	//std::string	 pubkeystr;
+
+    if(!privSendSigner.GetKeysFromSecret(strPrivkey,  keyCollate, pubkeyCollate))
+		throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid strPrivkey  . Please useing the correct Key.");
+
+
+    if(!privSendSigner.GetKeysFromSecret(strMasterKey,  keyMaster, pubkeyMaster))
+		throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid strPrivkey  . Please useing the correct Key.");
+
+	
+    CBitcoinSecret vchSecret;
+    vchSecret.SetKey(keyMaster);
+    //if(!vchSecret.SetString(strMasterKey)) return false;
+    //cout<<  vchSecret.ToString()<<endl ; 
+
+    //cout << CBitcoinAddress(pubkeyCollate.GetID()).ToString() <<endl;
+         
+    strMessage = Ipaddr.ToStringIP(false) + pubkeyCollate.GetID().ToString() + pubkeyMaster.GetID().ToString() +
+			boost::lexical_cast<std::string>(PROTOCOL_VERSION);
+   
+    cout<< strMessage<< endl;
+
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << strMessageMagic;
+    ss << strMessage;
+
+    vector<unsigned char> vchSig;
+    if (!keyCollate.SignCompact(ss.GetHash(), vchSig))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Sign failed");
+
+    return EncodeBase64(&vchSig[0], vchSig.size());
+
+
+}
+
+

@@ -176,8 +176,8 @@
         <translation>Подтвердите шифрование кошелька</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR ULD&lt;/b&gt;!</source>
-        <translation>Внимание: если Вы зашифруете кошелёк и потеряете пароль, вы &lt;b&gt;ПОТЕРЯЕТЕ ВСЕ ВАШИ ULD&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR UT&lt;/b&gt;!</source>
+        <translation>Внимание: если Вы зашифруете кошелёк и потеряете пароль, вы &lt;b&gt;ПОТЕРЯЕТЕ ВСЕ ВАШИ UT&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -443,7 +443,7 @@
         <translation>Открыть &amp;URI...</translation>
     </message>
     <message>
-        <source>Open a ulord: URI or payment request</source>
+        <source>Open a Ulord: URI or payment request</source>
         <translation>Открыть ulord: URI или запрос платежа</translation>
     </message>
     <message>
@@ -741,8 +741,8 @@ Address: %4
         <translation>Копировать сдачу</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;Darksend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use Darksend, please deselect all non-nonymized inputs first and then check Darksend checkbox again.</source>
-        <translation>Выбраны неанонимизированные средства. &lt;b&gt;Darksend будет отключен.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Если Вы все-таки хотите использовать Darksend, пожалуйста, снимите выделение с со всех неанонимизированных средств и заново поставьте галочку напротив Darksend.</translation>
+        <source>Non-anonymized input selected. &lt;b&gt;PrivSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivSend, please deselect all non-nonymized inputs first and then check PrivSend checkbox again.</source>
+        <translation>Выбраны неанонимизированные средства. &lt;b&gt;PrivSend будет отключен.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Если Вы все-таки хотите использовать PrivSend, пожалуйста, снимите выделение с со всех неанонимизированных средств и заново поставьте галочку напротив PrivSend.</translation>
     </message>
     <message>
         <source>highest</source>
@@ -842,10 +842,10 @@ Address: %4
     </message>
 </context>
 <context>
-    <name>DarksendConfig</name>
+    <name>PrivsendConfig</name>
     <message>
-        <source>Configure Darksend</source>
-        <translation>Настройте Darksend</translation>
+        <source>Configure PrivSend</source>
+        <translation>Настройте PrivSend</translation>
     </message>
     <message>
         <source>Basic Privacy</source>
@@ -864,48 +864,48 @@ Address: %4
         <translation>Пожалуйста, выберите уровень приватности.</translation>
     </message>
     <message>
-        <source>Use 2 separate masternodes to mix funds up to 1000 ULD</source>
-        <translation>Использовать 2 отдельные мастерноды для перемешивания до 1000 ULD</translation>
+        <source>Use 2 separate masternodes to mix funds up to 1000 UT</source>
+        <translation>Использовать 2 отдельные мастерноды для перемешивания до 1000 UT</translation>
     </message>
     <message>
-        <source>Use 8 separate masternodes to mix funds up to 1000 ULD</source>
-        <translation>Использовать 8 отдельных мастернод для перемешивания до 1000 ULD</translation>
+        <source>Use 8 separate masternodes to mix funds up to 1000 UT</source>
+        <translation>Использовать 8 отдельных мастернод для перемешивания до 1000 UT</translation>
     </message>
     <message>
         <source>Use 16 separate masternodes</source>
         <translation>Использовать 16 отдельных мастернод</translation>
     </message>
     <message>
-        <source>This option is the quickest and will cost about ~0.025 ULD to anonymize 1000 ULD</source>
-        <translation>Это самый быстрый вариант, анонимизация 1000 ULD будет стоить вам примерно 0.025 ULD</translation>
+        <source>This option is the quickest and will cost about ~0.025 UT to anonymize 1000 UT</source>
+        <translation>Это самый быстрый вариант, анонимизация 1000 UT будет стоить вам примерно 0.025 UT</translation>
     </message>
     <message>
-        <source>This option is moderately fast and will cost about 0.05 ULD to anonymize 1000 ULD</source>
-        <translation>Это относительно быстрый вариант, анонимизация 1000 ULD будет стоить вам примерно 0.05 ULD</translation>
+        <source>This option is moderately fast and will cost about 0.05 UT to anonymize 1000 UT</source>
+        <translation>Это относительно быстрый вариант, анонимизация 1000 UT будет стоить вам примерно 0.05 UT</translation>
     </message>
     <message>
-        <source>0.1 ULD per 1000 ULD you anonymize.</source>
-        <translation>0.1 ULD за каждые анонимизированные 1000 ULD.</translation>
+        <source>0.1 UT per 1000 UT you anonymize.</source>
+        <translation>0.1 UT за каждые анонимизированные 1000 UT.</translation>
     </message>
     <message>
         <source>This is the slowest and most secure option. Using maximum anonymity will cost</source>
         <translation>Этот самый медленный и безопасный вариант. Анонимизация будет стоить</translation>
     </message>
     <message>
-        <source>Darksend Configuration</source>
-        <translation>Настройки Darksend</translation>
+        <source>PrivSend Configuration</source>
+        <translation>Настройки PrivSend</translation>
     </message>
     <message>
-        <source>Darksend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Ulord's configuration screen.</source>
-        <translation>Darksend успешно установлен в режим обычной приватности (%1 и 2 раунда). Вы можете изменить это в любое время, используя окно настроек.</translation>
+        <source>PrivSend was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Ulord's configuration screen.</source>
+        <translation>PrivSend успешно установлен в режим обычной приватности (%1 и 2 раунда). Вы можете изменить это в любое время, используя окно настроек.</translation>
     </message>
     <message>
-        <source>Darksend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Ulord's configuration screen.</source>
-        <translation>Darksend успешно установлен в режим высокой приватности (%1 и 8 раундов). Вы можете изменить это в любое время, используя окно настроек.</translation>
+        <source>PrivSend was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Ulord's configuration screen.</source>
+        <translation>PrivSend успешно установлен в режим высокой приватности (%1 и 8 раундов). Вы можете изменить это в любое время, используя окно настроек.</translation>
     </message>
     <message>
-        <source>Darksend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Ulord's configuration screen.</source>
-        <translation>Darksend успешно установлен в режим максимально приватности (%1 и 16 раундов). Вы можете изменить это в любое время, используя окно настроек.</translation>
+        <source>PrivSend was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Ulord's configuration screen.</source>
+        <translation>PrivSend успешно установлен в режим максимально приватности (%1 и 16 раундов). Вы можете изменить это в любое время, используя окно настроек.</translation>
     </message>
 </context>
 <context>
@@ -1146,11 +1146,11 @@ Address: %4
         <translation>(0 = автоматически, &lt;0 = оставить столько незагруженных ядер)</translation>
     </message>
     <message>
-        <source>Darksend rounds to use</source>
-        <translation>Количество раундов Darksend</translation>
+        <source>PrivSend rounds to use</source>
+        <translation>Количество раундов PrivSend</translation>
     </message>
     <message>
-        <source>This amount acts as a threshold to turn off Darksend once it's reached.</source>
+        <source>This amount acts as a threshold to turn off PrivSend once it's reached.</source>
         <translation>Это пороговое значение, при достижении которого автоматическое перемешивание отключается.</translation>
     </message>
     <message>
@@ -1423,16 +1423,16 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Завершение:</translation>
     </message>
     <message>
-        <source>Darksend Balance:</source>
-        <translation>Баланс Darksend:</translation>
+        <source>PrivSend Balance:</source>
+        <translation>Баланс PrivSend:</translation>
     </message>
     <message>
         <source>Amount and Rounds:</source>
         <translation>Сумма и раунды:</translation>
     </message>
     <message>
-        <source>0 ULD / 0 Rounds</source>
-        <translation>0 ULD / 0 раундов</translation>
+        <source>0 UT / 0 Rounds</source>
+        <translation>0 UT / 0 раундов</translation>
     </message>
     <message>
         <source>Submitted Denom:</source>
@@ -1443,8 +1443,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>н/д</translation>
     </message>
     <message>
-        <source>Darksend</source>
-        <translation>Darksend</translation>
+        <source>PrivSend</source>
+        <translation>PrivSend</translation>
     </message>
     <message>
         <source>Recent transactions</source>
@@ -1463,16 +1463,16 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>(Последнее сообщение)</translation>
     </message>
     <message>
-        <source>Try to manually submit a Darksend request.</source>
-        <translation>Попробовать отправить Darksend-запрос вручную.</translation>
+        <source>Try to manually submit a PrivSend request.</source>
+        <translation>Попробовать отправить PrivSend-запрос вручную.</translation>
     </message>
     <message>
         <source>Try Mix</source>
         <translation>Попробовать вручную</translation>
     </message>
     <message>
-        <source>Reset the current status of Darksend (can interrupt Darksend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Сбросить текущий статус Darksend (можно прервать процесс перемешивания Darksend, но это может стоить Вам немного денег!)</translation>
+        <source>Reset the current status of PrivSend (can interrupt PrivSend if it's in the process of Mixing, which can cost you money!)</source>
+        <translation>Сбросить текущий статус PrivSend (можно прервать процесс перемешивания PrivSend, но это может стоить Вам немного денег!)</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -1487,11 +1487,11 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Выключен</translation>
     </message>
     <message>
-        <source>Start Darksend Mixing</source>
+        <source>Start PrivSend Mixing</source>
         <translation>Начать автоперемешивание</translation>
     </message>
     <message>
-        <source>Stop Darksend Mixing</source>
+        <source>Stop PrivSend Mixing</source>
         <translation>Остановить перемешивание</translation>
     </message>
     <message>
@@ -1535,9 +1535,9 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Включен</translation>
     </message>
     <message>
-        <source>Last Darksend message:
+        <source>Last PrivSend message:
 </source>
-        <translation>Последнее сообщение Darksend:
+        <translation>Последнее сообщение PrivSend:
 </translation>
     </message>
     <message>
@@ -1545,20 +1545,20 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Н/Д</translation>
     </message>
     <message>
-        <source>Darksend was successfully reset.</source>
-        <translation>Статус Darksend был успешно сброшен.</translation>
+        <source>PrivSend was successfully reset.</source>
+        <translation>Статус PrivSend был успешно сброшен.</translation>
     </message>
     <message>
-        <source>If you don't want to see internal Darksend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
-        <translation>Если Вы не хотите видеть внутренние транзакции/комиссии от работы Darksend, выберите Тип "Наиболее общие" на закладке "Транзакции".</translation>
+        <source>If you don't want to see internal PrivSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
+        <translation>Если Вы не хотите видеть внутренние транзакции/комиссии от работы PrivSend, выберите Тип "Наиболее общие" на закладке "Транзакции".</translation>
     </message>
     <message>
-        <source>Darksend requires at least %1 to use.</source>
-        <translation>Для работы Darksend требуется минимум %1.</translation>
+        <source>PrivSend requires at least %1 to use.</source>
+        <translation>Для работы PrivSend требуется минимум %1.</translation>
     </message>
     <message>
-        <source>Wallet is locked and user declined to unlock. Disabling Darksend.</source>
-        <translation>Кошелёк заблокирован и пользователь отказался его разблокировать. Darksend будет выключен.</translation>
+        <source>Wallet is locked and user declined to unlock. Disabling PrivSend.</source>
+        <translation>Кошелёк заблокирован и пользователь отказался его разблокировать. PrivSend будет выключен.</translation>
     </message>
 </context>
 <context>
@@ -2364,8 +2364,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>&amp;Добавить получателя</translation>
     </message>
     <message>
-        <source>Darksend</source>
-        <translation>Darksend</translation>
+        <source>PrivSend</source>
+        <translation>PrivSend</translation>
     </message>
     <message>
         <source>InstantX</source>
@@ -2416,8 +2416,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>анонимные средства</translation>
     </message>
     <message>
-        <source>(darksend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(для работы darksend требуется принудительно округлить до ближайшего %1).</translation>
+        <source>(PrivSend requires this amount to be rounded up to the nearest %1).</source>
+        <translation>(для работы PrivSend требуется принудительно округлить до ближайшего %1).</translation>
     </message>
     <message>
         <source>any available funds (not recommended)</source>
@@ -2748,7 +2748,7 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Разработчики Bitcoin Core</translation>
     </message>
     <message>
-        <source>The Ulord Core developers</source>
+        <source>Ulord Foundation Ltd.</source>
         <translation>Разработчики Ulord Core</translation>
     </message>
     <message>
@@ -3020,8 +3020,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Получено от</translation>
     </message>
     <message>
-        <source>Received via Darksend</source>
-        <translation>Получено через Darksend</translation>
+        <source>Received via PrivSend</source>
+        <translation>Получено через PrivSend</translation>
     </message>
     <message>
         <source>Sent to</source>
@@ -3036,24 +3036,24 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Добыто</translation>
     </message>
     <message>
-        <source>Darksend Denominate</source>
-        <translation>Перемешивание Darksend</translation>
+        <source>PrivSend Denominate</source>
+        <translation>Перемешивание PrivSend</translation>
     </message>
     <message>
-        <source>Darksend Collateral Payment</source>
-        <translation>Обеспечительный платеж Darksend</translation>
+        <source>PrivSend Collateral Payment</source>
+        <translation>Обеспечительный платеж PrivSend</translation>
     </message>
     <message>
-        <source>Darksend Make Collateral Inputs</source>
-        <translation>Создание обеспечительных монет для Darksend</translation>
+        <source>PrivSend Make Collateral Inputs</source>
+        <translation>Создание обеспечительных монет для PrivSend</translation>
     </message>
     <message>
-        <source>Darksend Create Denominations</source>
-        <translation>Создание номиналов для Darksend</translation>
+        <source>PrivSend Create Denominations</source>
+        <translation>Создание номиналов для PrivSend</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Отправлено через Darksend</translation>
+        <source>Privsent</source>
+        <translation>Отправлено через PrivSend</translation>
     </message>
     <message>
         <source>watch-only</source>
@@ -3131,24 +3131,24 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Отправлено на</translation>
     </message>
     <message>
-        <source>Darksent</source>
-        <translation>Отправлено через Darksend</translation>
+        <source>Privsent</source>
+        <translation>Отправлено через PrivSend</translation>
     </message>
     <message>
-        <source>Darksend Make Collateral Inputs</source>
-        <translation>Создание обеспечительных монет для Darksend</translation>
+        <source>PrivSend Make Collateral Inputs</source>
+        <translation>Создание обеспечительных монет для PrivSend</translation>
     </message>
     <message>
-        <source>Darksend Create Denominations</source>
-        <translation>Создание номиналов для Darksend</translation>
+        <source>PrivSend Create Denominations</source>
+        <translation>Создание номиналов для PrivSend</translation>
     </message>
     <message>
-        <source>Darksend Denominate</source>
-        <translation>Перемешивание Darksend</translation>
+        <source>PrivSend Denominate</source>
+        <translation>Перемешивание PrivSend</translation>
     </message>
     <message>
-        <source>Darksend Collateral Payment</source>
-        <translation>Обеспечительный платеж Darksend</translation>
+        <source>PrivSend Collateral Payment</source>
+        <translation>Обеспечительный платеж PrivSend</translation>
     </message>
     <message>
         <source>To yourself</source>
@@ -3276,8 +3276,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Отправка</translation>
     </message>
     <message>
-        <source>InstantX doesn't support sending values that high yet. Transactions are currently limited to %1 ULD.</source>
-        <translation>InstantX пока что не поддерживает такие большие суммы. На данный момент транзакции ограничены суммами до %1 ULD.</translation>
+        <source>InstantX doesn't support sending values that high yet. Transactions are currently limited to %1 UT.</source>
+        <translation>InstantX пока что не поддерживает такие большие суммы. На данный момент транзакции ограничены суммами до %1 UT.</translation>
     </message>
 </context>
 <context>
@@ -3330,8 +3330,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Не удалось установить блокировку на каталог данных %s. Возможно, Ulord Core уже запущен.</translation>
     </message>
     <message>
-        <source>Darksend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>При отправке Darksend использует только деноминированные средства, возможно, Вам просто нужно анонимизировать немного больше монет.</translation>
+        <source>PrivSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
+        <translation>При отправке PrivSend использует только деноминированные средства, возможно, Вам просто нужно анонимизировать немного больше монет.</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
@@ -3386,12 +3386,12 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Не удалось привязаться к %s на этом компьютере. Возможно, Ulord Core уже запущен.</translation>
     </message>
     <message>
-        <source>Unable to locate enough Darksend denominated funds for this transaction.</source>
-        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции номиналов Darksend.</translation>
+        <source>Unable to locate enough PrivSend denominated funds for this transaction.</source>
+        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции номиналов PrivSend.</translation>
     </message>
     <message>
-        <source>Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 ULD.</source>
-        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции неденоминированных средств, отличающихся от 1000ULD.</translation>
+        <source>Unable to locate enough PrivSend non-denominated funds for this transaction that are not equal 1000 UT.</source>
+        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции неденоминированных средств, отличающихся от 1000UT.</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
@@ -3490,8 +3490,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>База данных блоков повреждена</translation>
     </message>
     <message>
-        <source>Darksend options:</source>
-        <translation>Параметры Darksend:</translation>
+        <source>PrivSend options:</source>
+        <translation>Параметры PrivSend:</translation>
     </message>
     <message>
         <source>Debugging/Testing options:</source>
@@ -3562,8 +3562,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Ошибка: кошелёк заблокирован, создание транзакции невозможно!</translation>
     </message>
     <message>
-        <source>Error: You already have pending entries in the Darksend pool</source>
-        <translation>Ошибка: у Вас уже есть ожидающие записи в пуле Darksend</translation>
+        <source>Error: You already have pending entries in the PrivSend pool</source>
+        <translation>Ошибка: у Вас уже есть ожидающие записи в пуле PrivSend</translation>
     </message>
     <message>
         <source>Failed to listen on any port. Use -listen=0 if you want this.</source>
@@ -3614,8 +3614,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Удалить все трансакции из кошелька и при рестарте с помощью -rescan восстановить только те, которые есть в цепочке блоков</translation>
     </message>
     <message>
-        <source>Disable all Ulord specific functionality (Masternodes, Darksend, InstantX, Budgeting) (0-1, default: %u)</source>
-        <translation>Отключить всю функциональность, относящуюся к  Ulord (Мастерноды, Darksend, InstantX, бюджеты) (0-1, по умолчанию: %u)</translation>
+        <source>Disable all Ulord specific functionality (Masternodes, PrivSend, InstantX, Budgeting) (0-1, default: %u)</source>
+        <translation>Отключить всю функциональность, относящуюся к  Ulord (Мастерноды, PrivSend, InstantX, бюджеты) (0-1, по умолчанию: %u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
@@ -3626,20 +3626,20 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Включить instantx, показывать подтверждения для заблокированных транзакций (булевое, по умолчанию: %s)</translation>
     </message>
     <message>
-        <source>Enable use of automated darksend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Включить автоматическое перемешивание Darksend для средств, хранящихся в этом кошельке (0-1, по умолчанию: %u)</translation>
+        <source>Enable use of automated PrivSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Включить автоматическое перемешивание PrivSend для средств, хранящихся в этом кошельке (0-1, по умолчанию: %u)</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported.</source>
         <translation>Ошибка: Обнаружен неподдерживаемый аргумент -socks. Выбор версии SOCKS больше невозможен, поддерживаются только прокси версии SOCKS5.</translation>
     </message>
     <message>
-        <source>Fees (in ULD/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Комиссии (в ULD/Kb) меньше этого значения считаются нулевой для ретранслирования транзакции (по умолчанию: %s)</translation>
+        <source>Fees (in UT/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
+        <translation>Комиссии (в UT/Kb) меньше этого значения считаются нулевой для ретранслирования транзакции (по умолчанию: %s)</translation>
     </message>
     <message>
-        <source>Fees (in ULD/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Комиссии (в ULD/Kb) меньше этого значения считаются нулевой (для создания транзакции) (по умолчанию: %s)</translation>
+        <source>Fees (in UT/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
+        <translation>Комиссии (в UT/Kb) меньше этого значения считаются нулевой (для создания транзакции) (по умолчанию: %s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
@@ -3686,8 +3686,8 @@ https://www.transifex.com/projects/p/ulord/</translation>
         <translation>Вывод отладочной информации (по умолчанию: %u, указание &lt;category&gt; необязательно)</translation>
     </message>
     <message>
-        <source>Provide liquidity to Darksend by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
-        <translation>Предоставлять ликвидность для Darksend путем редкого участия в перемешивании монет на постоянной основе (0-100, по умолчанию: %u, 1=очень часто, высокая комиссия, 100=очень редко, низкая комиссия)</translation>
+        <source>Provide liquidity to PrivSend by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
+        <translation>Предоставлять ликвидность для PrivSend путем редкого участия в перемешивании монет на постоянной основе (0-100, по умолчанию: %u, 1=очень часто, высокая комиссия, 100=очень редко, низкая комиссия)</translation>
     </message>
     <message>
         <source>Require high priority for relaying free or low-fee transactions (default:%u)</source>
@@ -3734,8 +3734,8 @@ rpcpassword=%s
 </translation>
     </message>
     <message>
-        <source>Unable to locate enough funds for this transaction that are not equal 1000 ULD.</source>
-        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции средств, отличающихся от 1000ULD.</translation>
+        <source>Unable to locate enough funds for this transaction that are not equal 1000 UT.</source>
+        <translation>Не удалось обнаружить достаточных для выполнения этой транзакции средств, отличающихся от 1000UT.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
@@ -3808,16 +3808,16 @@ rpcpassword=%s
         <translation>Не могу распознать сетевой адрес в значении %s параметра -rpcbind</translation>
     </message>
     <message>
-        <source>Darksend is idle.</source>
-        <translation>Darksend в режиме ожидания.</translation>
+        <source>PrivSend is idle.</source>
+        <translation>PrivSend в режиме ожидания.</translation>
     </message>
     <message>
-        <source>Darksend request complete:</source>
-        <translation>Запрос Darksend завершен:</translation>
+        <source>PrivSend request complete:</source>
+        <translation>Запрос PrivSend завершен:</translation>
     </message>
     <message>
-        <source>Darksend request incomplete:</source>
-        <translation>Запрос Darksend не завершен:</translation>
+        <source>PrivSend request incomplete:</source>
+        <translation>Запрос PrivSend не завершен:</translation>
     </message>
     <message>
         <source>Disable safemode, override a real safe mode event (default: %u)</source>
@@ -3848,8 +3848,8 @@ rpcpassword=%s
         <translation>Ошибка: Обнаружен неподдерживаемый параметр -tor, используйте -onion вместо него.</translation>
     </message>
     <message>
-        <source>Fee (in ULD/kB) to add to transactions you send (default: %s)</source>
-        <translation>Комиссии (в ULD/kB), добавляемая к отправляемым Вами транзакциям (по умолчанию: %s)</translation>
+        <source>Fee (in UT/kB) to add to transactions you send (default: %s)</source>
+        <translation>Комиссии (в UT/kB), добавляемая к отправляемым Вами транзакциям (по умолчанию: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
@@ -3948,8 +3948,8 @@ rpcpassword=%s
         <translation>Неверная сумма в параметре -paytxfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Last successful Darksend action was too recent.</source>
-        <translation>Последнее успешное действие Darksend было слишком недавно.</translation>
+        <source>Last successful PrivSend action was too recent.</source>
+        <translation>Последнее успешное действие PrivSend было слишком недавно.</translation>
     </message>
     <message>
         <source>Limit size of signature cache to &lt;n&gt; entries (default: %u)</source>
@@ -4216,16 +4216,16 @@ rpcpassword=%s
         <translation>Ключ KeePassHttp для зашифрованной коммуникации с KeePass</translation>
     </message>
     <message>
-        <source>Keep N ULD anonymized (default: %u)</source>
-        <translation>Держать N ULD анонимизированными (по умолчанию: %u)</translation>
+        <source>Keep N UT anonymized (default: %u)</source>
+        <translation>Держать N UT анонимизированными (по умолчанию: %u)</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
         <translation>Держать в памяти до &lt;n&gt; несвязных транзакций (по умолчанию: %u)</translation>
     </message>
     <message>
-        <source>Last Darksend was too recent.</source>
-        <translation>Последнее действие Darksend было слишком недавно.</translation>
+        <source>Last PrivSend was too recent.</source>
+        <translation>Последнее действие PrivSend было слишком недавно.</translation>
     </message>
     <message>
         <source>Line: %d</source>
@@ -4400,7 +4400,7 @@ rpcpassword=%s
         <translation>Эта справка</translation>
     </message>
     <message>
-        <source>This is experimental software.</source>
+        <source>This is Ulord full-node wallet client</source>
         <translation>Это экспериментальное ПО.</translation>
     </message>
     <message>
@@ -4476,8 +4476,8 @@ rpcpassword=%s
         <translation>Имя для подключений JSON-RPC</translation>
     </message>
     <message>
-        <source>Value more than Darksend pool maximum allows.</source>
-        <translation>Превышено значение допустимой для пула Darksend суммы.</translation>
+        <source>Value more than PrivSend pool maximum allows.</source>
+        <translation>Превышено значение допустимой для пула PrivSend суммы.</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>

@@ -1,7 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2018 The Ulord Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -148,11 +148,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  * transaction cannot be spent since it did not originally exist in the
  * database.
  *
- * CBlock(hash=00000ffd590b14, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=e0028e, nTime=1390095618, nBits=1e0ffff0, nNonce=28917698, vtx=1)
- *   CTransaction(hash=e0028e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *     CTxIn(COutPoint(000000, -1), coinbase 04ffff001d01044c5957697265642030392f4a616e2f3230313420546865204772616e64204578706572696d656e7420476f6573204c6976653a204f76657273746f636b2e636f6d204973204e6f7720416363657074696e6720426974636f696e73)
- *     CTxOut(nValue=50.00000000, scriptPubKey=0xA9037BAC7050C479B121CF)
- *   vMerkleTree: e0028e
+ * CBlock(hash=0000079b37c3c2, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=69de44, nTime=1526947274, nBits=1e09b173, nNonce=0000e865ca57d789ba, vtx=1)
+ *   CTransaction(hash=69de44, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+ *     CTxIn(COutPoint(000000, -1), coinbase 0x)
+ *     CTxOut(nValue=1.00000000, scriptPubKey=0x)
+ *   vMerkleTree: 69de44
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint256 nNonce, uint32_t nBits, int32_t nVersion, const int64_t& genesisReward)
 {
@@ -165,7 +165,7 @@ static CBlock CreateGenesisBlock(uint32_t nTime, uint256 nNonce, uint32_t nBits,
 
 static CBlock CreateGenesisBlock1(uint32_t nTime, uint256 nNonce, uint32_t nBits, int32_t nVersion, const int64_t& genesisReward)                                                                                                                
 {
-    const char* pszTimestamp = "abracadabra";
+    const char* pszTimestamp = "Change the World with Us. 22/May/2018, 00:00:00, GMT";
     const CScript genesisOutputScript = CScript() << ParseHex("041c508f27e982c369486c0f1a42779208b3f5dc96c21a2af6004cb18d1529f42182425db1e1632dc6e73ff687592e148569022cee52b4b4eb10e8bb11bd927ec0") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
@@ -190,18 +190,18 @@ public:
         consensus.premine = int64_t(1e8 * COIN);                            // premine
         consensus.genesisReward = int64_t(1 * COIN);                        // genesis
         consensus.minerReward4 = int64_t(112.966 * COIN);                   // miners
-        consensus.minerReward5 = int64_t(535.103 * COIN);
+        consensus.minerReward5 = int64_t(133.775 * COIN);
         consensus.mnReward1 = int64_t(52.411 * COIN);                       // masternodes
         consensus.mnReward2 = int64_t(76.104 * COIN);					
-        consensus.mnReward5 = int64_t(535.103 * COIN);
+        consensus.mnReward5 = int64_t(133.775 * COIN);
         consensus.foundersReward = int64_t(4166666.667 * COIN);             // founders
         consensus.bdgetReward4 = int64_t(520833.333 * COIN);                // budget
-        consensus.bdgetReward5 = int64_t(2083333.333 * COIN);
+        consensus.bdgetReward5 = int64_t(520833.333 * COIN);
         consensus.colleteral = int64_t(1e4 * COIN);                         // masternode colleteral
 
         consensus.nSubsidyHalvingInterval = 840960;                     // 4 years, 24 * 60 / 2.5 * 365 * 4 
         consensus.nMasternodePaymentsStartBlock = 57600;                // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
-        consensus.nMasternodePaymentsIncreaseBlock = 576 * 365;         //576 * 365
+        //consensus.nMasternodePaymentsIncreaseBlock = 576 * 365;         //576 * 365
         consensus.nMasternodePaymentsIncreasePeriod = 576 * 365;        // 17280 - actual historical value
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 2;                        // actual historical value
@@ -246,20 +246,20 @@ public:
         pchMessageStart[1] = 0x01;
         pchMessageStart[2] = 0x6f;
         pchMessageStart[3] = 0xb1;
-		vAlertPubKey = ParseHex("04838a03bad39edd961c7b25ed87fd34ac234d4786c127b3d31f4ea529b08f26c4d50f3373ce247926eca129aa1d5aad2b68da546336533e24a497bee95195c36f");
+		vAlertPubKey = ParseHex("028efd0f3c697689f8f1f6744edbbc1f85871b8c51218ddd89d90a3e435d1a8691");
         nDefaultPort = 9888;
         nMaxTipAge = 6 * 60 * 60; // ~144 blocks behind -> 2 x fork detection time, was 24 * 60 * 60 in bitcoin
         nPruneAfterHeight = 100000;
         arith_uint256 nTempBit =  UintToArith256( consensus.powLimit);
-        genesis = CreateGenesisBlock1(1524045652, uint256S("0x0000be7245a98c700f01293501a062837cb465afd70da22ee812b69a0c131f8c"), nTempBit.GetCompact(), 1, consensus.genesisReward);
+        genesis = CreateGenesisBlock1(1526947274, uint256S("0x0000e865ca57d789ba58154ed7f29decd569ce91289d870bf54f824dea09971c"), nTempBit.GetCompact(), 1, consensus.genesisReward);
 #ifdef GENESIS_GENERATION
         arith_uint256 a("0x000009b173000000000000000000000000000000000000000000000000000000");
         std::cout << "\tpow:\t" << a.GetCompact()  << " "<< nTempBit.GetCompact() << std::endl;
         //findGenesis(&genesis, "main");
 #endif
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x0000083331b8aa57aaae020d79aabe4136ebea6ce29be3a50fcaa2a55777e79c"));
-        assert(genesis.hashMerkleRoot == uint256S("0x2b5ff31e4f2bccf51441d2f78849c2ca393daa187cede58373ccad8f1794b8d9"));
+        assert(consensus.hashGenesisBlock == uint256S("0x0000079b37c3c290dc81e95bca28aa7df5636145ae35ebee86e10cc3cce96fb2"));
+        assert(genesis.hashMerkleRoot == uint256S("0x69de4474f3172f2366a11b9d5a2b9138fb5bbb0b77713d42fdfe69fc64a34162"));
 
 
         // Ulord addresses start with 'U'
@@ -278,10 +278,15 @@ public:
         //vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
         vFixedSeeds.clear();
         vSeeds.clear();		
-        vSeeds.push_back(CDNSSeedData("ulord.one", "dnsseed1.ulord.one"));
-	vSeeds.push_back(CDNSSeedData("ulord.io", "dnsseed1.ulord.io"));  
-	vSeeds.push_back(CDNSSeedData("fcash.cc", "dnsseed1.fcash.cc"));
-	uCenter = "ulord.fcash.cc";                           // for masternode verify
+        vSeeds.push_back(CDNSSeedData("ulord.one", "seed1.ulord.one"));
+	vSeeds.push_back(CDNSSeedData("ulord.one", "seed2.ulord.one"));  
+	vSeeds.push_back(CDNSSeedData("ulord.one", "seed3.ulord.one"));
+	vSeeds.push_back(CDNSSeedData("ulord.one", "seed4.ulord.one"));
+	vSeeds.push_back(CDNSSeedData("ulord.one", "seed5.ulord.one"));
+	vSeeds.push_back(CDNSSeedData("ulord.one", "seed6.ulord.one"));
+	vSeeds.push_back(CDNSSeedData("ulord.one", "seed7.ulord.one"));
+	    
+	uCenter = "ucenter.ulord.one";                           // for masternode verify
 
         fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
@@ -291,12 +296,15 @@ public:
 
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60; // fulfilled requests expire in 1 hour
-        strSporkPubKey = "044adbc8019f33ad556e99e73f00afa0fe50e9617fdc3098aac24125f517261822affad3ff5ea5f6e37ab39f9443b6912c4f8f806bb8c8bf5aa812a3dc0b3a8c55";
+        strSporkPubKey = "03dc480bc3e569ea1ceed5ab8ed5904abd3e938e0f7e594ebf82397e7830fa56a5";
 
         checkpointData = (CCheckpointData) {
             boost::assign::map_list_of
-            (0, uint256S("0x0000083331b8aa57aaae020d79aabe4136ebea6ce29be3a50fcaa2a55777e79c")),
-            1524045652,                       // * UNIX timestamp of last checkpoint block
+            (   0, uint256S("0x0000079b37c3c290dc81e95bca28aa7df5636145ae35ebee86e10cc3cce96fb2"))
+            (  10, uint256S("0x0000021d155df9c31a41f102ea2490a6706f58cc6a5bfac24723cec75804f82a"))
+            ( 100, uint256S("0x000001b236b617573c507362b517d721235efe9371aa9f4e9eaee6517e5af6a2"))
+	    ( 1000, uint256S("0x0000000084e4cd2c850c88f0978c2b46b08e9f9fefceb89f023e5274ae497b8a")),
+            1526704298,                       // * UNIX timestamp of last checkpoint block
             0,                                // * total number of transactions between genesis and last checkpoint
                                               //   (the tx=... number in the SetBestChain debug.log lines)
             0                                 // * estimated number of transactions per day after checkpoint
@@ -304,27 +312,8 @@ public:
 
         // Founders reward script expects a vector of 2-of-3 multisig addresses
         vFoundersRewardAddress = {
-            "UNYu5sESPnFiYfUdPovQ4DkVZ1JUZRSDzH", /* main-index: 0*/
-            "UNgxHBPF7E84jdG7vyUk8s8FTZBSkmsrvf", /* main-index: 1*/
-            "UPYUKccNPUznkM7p7K77LxPC1u56WnHX8g", /* main-index: 2*/
-            "UPmQ1Jpo8C3KuXikZ6V4VE7Ci6rSJ98SpF", /* main-index: 3*/
-            "UQ4vWMrqMGX1Xh6EKH3PJqxAHAPpVqqaJF", /* main-index: 4*/
-            "UQV3mydZX5wJ4mRack2neRZcEssQ9uMCEU", /* main-index: 5*/
-            "URM5MvmnywdBrg2ydag4uGAJDtAs1kYHg1", /* main-index: 6*/
-            "URi9L7PXpLAf6ka2CL26dGte6ZGoeYvmvY", /* main-index: 7*/
-            "URzauhyLHsjubYXuzUpfUBgq4HH3Mr1Swc", /* main-index: 8*/
-            "USVJWgzDs3Jf4uzaDMNgGjSqqwEkaFBEX7", /* main-index: 9*/
-            "USdxtWPhmWvtBFGWaVRPuyHyqKWNMtHpKG", /* main-index: 10*/
-            "USfoBmxrefRUaZVmVLcEYPQ8PfrG14MpbZ", /* main-index: 11*/
-            "USnqJ73sPSJW5aRPfcQvJxzMiyTsAC9o1y", /* main-index: 12*/
-            "USp1inLdJKoXKWZj3DTbAwfi5xrbWS89VM", /* main-index: 13*/
-            "UTfhKVcm2UVbhC1TffcTEWq7dfxjTyQDpM", /* main-index: 14*/
-            "UTyP5ak38ErHHMrMEr7sEy87q4d4QQymTb", /* main-index: 15*/
-            "UTyZHmseooXwNTxZQQtrc4gKVF4cw2AYg1", /* main-index: 16*/
-            "UUCRTjTnzAknJsgxRJcHXaG6gVMnRCAgEn", /* main-index: 17*/
-            "UUPLH2XgRZWTShiDSQEpu6QdXwKgAf3LNM", /* main-index: 18*/
-            "UUPLPbyre94vLQMDe2yvvucFHqX5ye4DXM", /* main-index: 19*/
-            "UURodxCQSC8PW4BKFwQ6h3tBRgr8gxTTEu", /* main-index: 20*/
+            "USu35JzWCXSvgvDL1utfFzb52zR1fdkfZ9", /* main-index: 0*/
+            "US2b9XyE5fCu8DNXhC4xwU7wo7b4uMNy4q", /* main-index: 1*/
 	    };
     }
 };
@@ -387,7 +376,7 @@ public:
 
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 1524057440;               // 2018/4/18 20:57:16
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 1524057440;               // 2018/4/18 20:57:16o
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout =   1555592236;               // 2019/4/18 20:57:16
 
         pchMessageStart[0] = 0xc2;
@@ -415,7 +404,7 @@ public:
         //vSeeds.push_back(CDNSSeedData("ulord.one","testnet-seed1.ulord.one"));  
 	    //vSeeds.push_back(CDNSSeedData("ulord.io","testnet-seed1.ulord.io"));
 	    //vSeeds.push_back(CDNSSeedData("fcash.cc","testnet-seed1.fcash.cc"));
-        //uCenter = "ulord.fcash.cc";                           // currently ignored
+        uCenter = "test-ucenter.ulord.one";                           // currently ignored
 
         // Testnet Ulord addresses start with 'u'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,130);
@@ -444,7 +433,7 @@ public:
 
         checkpointData = (CCheckpointData) {
             boost::assign::map_list_of
-            (0, uint256S("0x000f378be841f44e75346eebd931b13041f0dee561af6a80cfea6669c1bfec03")),
+            ( 0, uint256S("0x000f378be841f44e75346eebd931b13041f0dee561af6a80cfea6669c1bfec03")),
             1524057440,     // * UNIX timestamp of last checkpoint block
             0,              // * total number of transactions between genesis and last checkpoint
                             //   (the tx=... number in the SetBestChain debug.log lines)
@@ -523,13 +512,13 @@ public:
         nDefaultPort = 29888;
         nPruneAfterHeight = 1000;
 
-        genesis = CreateGenesisBlock1(1519895551, uint256S("0x0000841e2005651582301a339bdd8550c02bdea8b05ceabbf98a5b60467b0004"), 0x200f0f0f, 1, 1 * COIN);
+        genesis = CreateGenesisBlock1(1526946000, uint256S("0x0000ec7bfb02cb74cc021bbc03773834a65f8a16655212b5abc8841efbea0000"), 0x200f0f0f, 1, 1 * COIN);
 #ifdef GENESIS_GENERATION
         //findGenesis(&genesis, "regtest");
 #endif
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x083dfbb3e5e7c20948e7e32640090c1f4ce2791f875ccb2164888d0c70e279be"));
-        assert(genesis.hashMerkleRoot == uint256S("0x2b5ff31e4f2bccf51441d2f78849c2ca393daa187cede58373ccad8f1794b8d9"));
+        assert(consensus.hashGenesisBlock == uint256S("0x0c1417be9488c5bc9c2974a8c2edf89089fdf9fa3e0e4a0d4c668ab973fcf8b4"));
+        assert(genesis.hashMerkleRoot == uint256S("0x69de4474f3172f2366a11b9d5a2b9138fb5bbb0b77713d42fdfe69fc64a34162"));
 
         vFixedSeeds.clear();                                             //! Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();                                                  //! Regtest mode doesn't have any DNS seeds.
@@ -544,7 +533,7 @@ public:
 
         checkpointData = (CCheckpointData){
             boost::assign::map_list_of
-            (0, uint256S("0x083dfbb3e5e7c20948e7e32640090c1f4ce2791f875ccb2164888d0c70e279be")),
+            (0, uint256S("0x09af15de1b9587ffd44cc1c29955c368482f2aa654f9fb62ed68d26f03134011")),
             0,
             0,
             0

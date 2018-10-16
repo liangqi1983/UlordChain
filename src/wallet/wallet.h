@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2016-2018 Ulord Development Team
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_WALLET_H
-#define BITCOIN_WALLET_WALLET_H
+#ifndef ULORD_WALLET_H
+#define ULORD_WALLET_H
 
 #include "amount.h"
 #include "base58.h"
@@ -38,7 +39,7 @@ extern CAmount maxTxFee;
 extern unsigned int nTxConfirmTarget;
 extern bool bSpendZeroConfChange;
 extern bool fSendFreeTransactions;
-
+extern bool EnsureWalletIsAvailable(bool avoidException);
 extern bool fLargeWorkForkFound;
 extern bool fLargeWorkInvalidChainFound;
 
@@ -50,10 +51,6 @@ static const CAmount nHighTransactionFeeWarning = 0.01 * COIN;
 //! -fallbackfee default
 static const CAmount DEFAULT_FALLBACK_FEE = 20000;
 //! -mintxfee default
-/**
- * We are ~100 times smaller then bitcoin now (2016-03-01), set minTxFee 10 times higher
- * so it's still 10 times lower comparing to bitcoin.
- */
 static const CAmount DEFAULT_TRANSACTION_MINFEE = 10000; // was 1000
 //! -maxtxfee default
 static const CAmount DEFAULT_TRANSACTION_MAXFEE = 0.2 * COIN; // "smallest denom" + X * "denom tails"
@@ -95,9 +92,9 @@ enum AvailableCoinsType
 {
     ALL_COINS = 1,
     ONLY_DENOMINATED = 2,
-    ONLY_NOT1000IFMN = 3,
-    ONLY_NONDENOMINATED_NOT1000IFMN = 4,
-    ONLY_1000 = 5, // find masternode outputs including locked ones (use with caution)
+    ONLY_NOT10000IFMN = 3,
+    ONLY_NONDENOMINATED_NOT10000IFMN = 4,
+    ONLY_10000 = 5, // find masternode outputs including locked ones (use with caution)
     ONLY_PRIVATESEND_COLLATERAL = 6
 };
 
@@ -471,7 +468,7 @@ public:
         tx = txIn; i = iIn; nDepth = nDepthIn; fSpendable = fSpendableIn;
     }
 
-    //Used with Darksend. Will return largest nondenom, then denominations, then very small inputs
+    //Used with PrivSend. Will return largest nondenom, then denominations, then very small inputs
     int Priority() const;
 
     std::string ToString() const;
@@ -530,7 +527,7 @@ private:
             const std::vector<COutput> &vAvailableCoins,
             const CAmount &nTargetValue,
             std::set<std::pair<const CWalletTx *, unsigned int>> &setCoinsRet,
-            CAmount &nValueRet) const;
+            CAmount &nValueRet, const CCoinControl* coinControl) const;
 
     CWalletDB *pwalletdbEncryption;
 
@@ -664,13 +661,14 @@ public:
 
     bool SelectCoinsByDenominations(int nDenom, CAmount nValueMin, CAmount nValueMax, std::vector<CTxIn>& vecTxInRet, std::vector<COutput>& vCoinsRet, CAmount& nValueRet, int nPrivateSendRoundsMin, int nPrivateSendRoundsMax);
     bool GetCollateralTxIn(CTxIn& txinRet, CAmount& nValueRet) const;
-    bool SelectCoinsDark(CAmount nValueMin, CAmount nValueMax, std::vector<CTxIn>& vecTxInRet, CAmount& nValueRet, int nPrivateSendRoundsMin, int nPrivateSendRoundsMax) const;
+    bool SelectCoinsPriv(CAmount nValueMin, CAmount nValueMax, std::vector<CTxIn>& vecTxInRet, CAmount& nValueRet, int nPrivateSendRoundsMin, int nPrivateSendRoundsMax) const;
     bool SelectCoinsGrouppedByAddresses(std::vector<CompactTallyItem>& vecTallyRet, bool fSkipDenominated = true, bool fAnonymizable = true) const;
 
-    /// Get 1000ULD output and keys which can be used for the Masternode
-    bool GetMasternodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet, std::string strTxHash = "", std::string strOutputIndex = "");
+    /// Get 1000UT output and keys which can be used for the Masternode
+	bool GetMasternodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet, std::string strTxHash = "", std::string strOutputIndex = "");
     /// Extract txin information and keys from output
     bool GetVinAndKeysFromOutput(COutput out, CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet);
+    bool GetVinAndKeysFromOutput(CTxOut vout,CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet);
 
     bool HasCollateralInputs(bool fOnlyConfirmed = true) const;
     bool IsCollateralAmount(CAmount nInputAmount) const;
@@ -1059,4 +1057,4 @@ private:
     std::vector<char> _ssExtra;
 };
 
-#endif // BITCOIN_WALLET_WALLET_H
+#endif // ULORD_WALLET_H

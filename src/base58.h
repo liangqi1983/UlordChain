@@ -63,7 +63,7 @@ inline bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRe
  * Decode a base58-encoded string (str) that includes a checksum into a byte
  * vector (vchRet), return true if decoding is successful
  */
-inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
+bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
 
 /**
  * Base class for all base58-encoded data
@@ -113,7 +113,7 @@ public:
     CBitcoinAddress(const CTxDestination &dest) { Set(dest); }
     CBitcoinAddress(const std::string& strAddress) { SetString(strAddress); }
     CBitcoinAddress(const char* pszAddress) { SetString(pszAddress); }
-
+	uint160 GetData()const;
     CTxDestination Get() const;
     bool GetKeyID(CKeyID &keyID) const;
     bool GetIndexKey(uint160& hashBytes, int& type) const;

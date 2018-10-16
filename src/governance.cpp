@@ -2,7 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "darksend.h"
+#include "privsend.h"
 #include "governance.h"
 #include "governance-object.h"
 #include "governance-vote.h"
@@ -464,7 +464,7 @@ void CGovernanceManager::UpdateCachesAndClean()
 
     fRateChecksEnabled = true;
 }
-
+//nGovObjHash == nHash
 CGovernanceObject *CGovernanceManager::FindGovernanceObject(const uint256& nHash)
 {
     LOCK(cs);
@@ -741,7 +741,7 @@ bool CGovernanceManager::MasternodeRateCheck(const CGovernanceObject& govobj, bo
     bool fRateCheckBypassed = false;
     return MasternodeRateCheck(govobj, fUpdateLast, true, fRateCheckBypassed);
 }
-
+// rate check ,trigger can not great than twice per superblockcycle , watchdog can not great than twice per 3600 second
 bool CGovernanceManager::MasternodeRateCheck(const CGovernanceObject& govobj, bool fUpdateLast, bool fForce, bool& fRateCheckBypassed)
 {
     LOCK(cs);

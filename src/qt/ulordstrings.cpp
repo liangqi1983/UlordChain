@@ -77,10 +77,10 @@ QT_TRANSLATE_NOOP("ulord-core", ""
 "Execute command when the best block changes (%s in cmd is replaced by block "
 "hash)"),
 QT_TRANSLATE_NOOP("ulord-core", ""
-"Fees (in ULD/Kb) smaller than this are considered zero fee for relaying "
+"Fees (in UT/Kb) smaller than this are considered zero fee for relaying "
 "(default: %s)"),
 QT_TRANSLATE_NOOP("ulord-core", ""
-"Fees (in ULD/Kb) smaller than this are considered zero fee for transaction "
+"Fees (in UT/Kb) smaller than this are considered zero fee for transaction "
 "creation (default: %s)"),
 QT_TRANSLATE_NOOP("ulord-core", ""
 "Flush database activity from memory pool to disk log every <n> megabytes "
@@ -167,10 +167,10 @@ QT_TRANSLATE_NOOP("ulord-core", ""
 "Unable to locate enough PrivateSend denominated funds for this transaction."),
 QT_TRANSLATE_NOOP("ulord-core", ""
 "Unable to locate enough PrivateSend non-denominated funds for this transaction "
-"that are not equal 1000 ULD."),
+"that are not equal 1000 UT."),
 QT_TRANSLATE_NOOP("ulord-core", ""
 "Unable to locate enough funds for this transaction that are not equal 1000 "
-"ULD."),
+"UT."),
 QT_TRANSLATE_NOOP("ulord-core", ""
 "Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: "
 "%s)"),
@@ -238,7 +238,7 @@ QT_TRANSLATE_NOOP("ulord-core", "Copyright (C) 2009-%i The Bitcoin Core Develope
 QT_TRANSLATE_NOOP("ulord-core", "Copyright (C) 2014-%i The Dash Core Developers"),
 QT_TRANSLATE_NOOP("ulord-core", "Corrupted block database detected"),
 QT_TRANSLATE_NOOP("ulord-core", "Could not parse -rpcbind value %s as network address"),
-QT_TRANSLATE_NOOP("ulord-core", "Could not parse masternode.conf"),
+QT_TRANSLATE_NOOP("ulord-core", "Could not parse ulord.conf"),
 QT_TRANSLATE_NOOP("ulord-core", "PrivateSend is idle."),
 QT_TRANSLATE_NOOP("ulord-core", "PrivateSend options:"),
 QT_TRANSLATE_NOOP("ulord-core", "PrivateSend request complete:"),
@@ -270,7 +270,7 @@ QT_TRANSLATE_NOOP("ulord-core", "Error: Wallet locked, unable to create transact
 QT_TRANSLATE_NOOP("ulord-core", "Error: You already have pending entries in the PrivateSend pool"),
 QT_TRANSLATE_NOOP("ulord-core", "Failed to listen on any port. Use -listen=0 if you want this."),
 QT_TRANSLATE_NOOP("ulord-core", "Failed to read block"),
-QT_TRANSLATE_NOOP("ulord-core", "Fee (in ULD/kB) to add to transactions you send (default: %s)"),
+QT_TRANSLATE_NOOP("ulord-core", "Fee (in UT/kB) to add to transactions you send (default: %s)"),
 QT_TRANSLATE_NOOP("ulord-core", "Finalizing transaction."),
 QT_TRANSLATE_NOOP("ulord-core", "Force safe mode (default: %u)"),
 QT_TRANSLATE_NOOP("ulord-core", "Found enough users, signing ( waiting %s )"),
@@ -298,12 +298,12 @@ QT_TRANSLATE_NOOP("ulord-core", "Invalid amount for -paytxfee=<amount>: '%s' (mu
 QT_TRANSLATE_NOOP("ulord-core", "Invalid amount for -paytxfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("ulord-core", "Invalid masternodeprivkey. Please see documenation."),
 QT_TRANSLATE_NOOP("ulord-core", "Invalid netmask specified in -whitelist: '%s'"),
-QT_TRANSLATE_NOOP("ulord-core", "Invalid port detected in masternode.conf"),
+QT_TRANSLATE_NOOP("ulord-core", "Invalid port detected in ulord.conf"),
 QT_TRANSLATE_NOOP("ulord-core", "Invalid private key."),
 QT_TRANSLATE_NOOP("ulord-core", "Invalid script detected."),
 QT_TRANSLATE_NOOP("ulord-core", "KeePassHttp id for the established association"),
 QT_TRANSLATE_NOOP("ulord-core", "KeePassHttp key for AES encrypted communication with KeePass"),
-QT_TRANSLATE_NOOP("ulord-core", "Keep N ULD anonymized (default: %u)"),
+QT_TRANSLATE_NOOP("ulord-core", "Keep N UT anonymized (default: %u)"),
 QT_TRANSLATE_NOOP("ulord-core", "Keep at most <n> unconnectable transactions in memory (default: %u)"),
 QT_TRANSLATE_NOOP("ulord-core", "Last PrivateSend was too recent."),
 QT_TRANSLATE_NOOP("ulord-core", "Last successful PrivateSend action was too recent."),
@@ -396,7 +396,7 @@ QT_TRANSLATE_NOOP("ulord-core", "Synchronizing masternode winners..."),
 QT_TRANSLATE_NOOP("ulord-core", "Synchronizing masternodes..."),
 QT_TRANSLATE_NOOP("ulord-core", "Synchronizing sporks..."),
 QT_TRANSLATE_NOOP("ulord-core", "This help message"),
-QT_TRANSLATE_NOOP("ulord-core", "This is experimental software."),
+QT_TRANSLATE_NOOP("ulord-core", "This is Ulord full-node wallet client"),
 QT_TRANSLATE_NOOP("ulord-core", "This is intended for regression testing tools and app development."),
 QT_TRANSLATE_NOOP("ulord-core", "This is not a Masternode."),
 QT_TRANSLATE_NOOP("ulord-core", "Threshold for disconnecting misbehaving peers (default: %u)"),

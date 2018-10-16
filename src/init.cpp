@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2018 The Ulord Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -43,17 +43,17 @@
 #include "wallet/db.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
-#endif
+#endif // ENABLE_WALLET
 
 #include "activemasternode.h"
-#include "darksend.h"
+#include "privsend.h"
 #include "dsnotificationinterface.h"
 #include "flat-database.h"
 #include "governance.h"
 #include "instantx.h"
 #ifdef ENABLE_WALLET
 #include "keepass.h"
-#endif
+#endif // ENABLE_WALLET
 #include "masternode-payments.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
@@ -63,6 +63,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+
 
 #ifndef WIN32
 #include <signal.h>
@@ -260,7 +261,7 @@ void PrepareShutdown()
         pcoinsdbview = NULL;
         delete pblocktree;
         pblocktree = NULL;
-        delete pclaimTrie;                                                                                                                                                                                                                                                  
+        delete pclaimTrie;                                                      
         pclaimTrie = NULL;
     }
 #ifdef ENABLE_WALLET
@@ -566,7 +567,7 @@ std::string HelpMessage(HelpMessageMode mode)
 
     strUsage += HelpMessageGroup(_("Masternode options:"));
     strUsage += HelpMessageOpt("-masternode=<n>", strprintf(_("Enable the client to act as a masternode (0-1, default: %u)"), 0));
-    strUsage += HelpMessageOpt("-mnconf=<file>", strprintf(_("Specify masternode configuration file (default: %s)"), "masternode.conf"));
+   
     strUsage += HelpMessageOpt("-mnconflock=<n>", strprintf(_("Lock masternodes from masternode configuration file (default: %u)"), 1));
     strUsage += HelpMessageOpt("-masternodeprivkey=<n>", _("Set the masternode private key"));
 
@@ -574,7 +575,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-enableprivatesend=<n>", strprintf(_("Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)"), 0));
     strUsage += HelpMessageOpt("-privatesendmultisession=<n>", strprintf(_("Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)"), DEFAULT_PRIVATESEND_MULTISESSION));
     strUsage += HelpMessageOpt("-privatesendrounds=<n>", strprintf(_("Use N separate masternodes for each denominated input to mix funds (2-16, default: %u)"), DEFAULT_PRIVATESEND_ROUNDS));
-    strUsage += HelpMessageOpt("-privatesendamount=<n>", strprintf(_("Keep N ULD anonymized (default: %u)"), DEFAULT_PRIVATESEND_AMOUNT));
+    strUsage += HelpMessageOpt("-privatesendamount=<n>", strprintf(_("Keep N UT anonymized (default: %u)"), DEFAULT_PRIVATESEND_AMOUNT));
     strUsage += HelpMessageOpt("-liquidityprovider=<n>", strprintf(_("Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)"), DEFAULT_PRIVATESEND_LIQUIDITY));
 
     strUsage += HelpMessageGroup(_("InstantSend options:"));
@@ -619,13 +620,7 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    return FormatParagraph(strprintf(_("Copyright (C) 2017-%i The Ulord Core Developers"), COPYRIGHT_YEAR)) + "\n" +
-           "\n" +
-           FormatParagraph(_("This is experimental software.")) + "\n" +
-           "\n" +
-           FormatParagraph(_("Distributed under the MIT software license, see the accompanying file COPYING.")) + "\n" +
-           "\n" +
-           FormatParagraph(_("This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.")) +
+    return FormatParagraph(strprintf(_("Copyright © 2017-%i Ulord Foundation Ltd."), COPYRIGHT_YEAR)) + "\n" +
            "\n";
 }
 
@@ -1229,7 +1224,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // Start the lightweight task scheduler thread
     CScheduler::Function serviceLoop = boost::bind(&CScheduler::serviceQueue, &scheduler);
     threadGroup.create_thread(boost::bind(&TraceThread<CScheduler::Function>, "scheduler", serviceLoop));
-
+#ifdef ENABLE_ADDRSTAT
+	MyAddrDb_init();
+#endif //ENABLE_ADDRSTAT
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
      * that the server is there and will be ready later).  Warmup mode will
@@ -1807,77 +1804,28 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         
         LogPrintf("MASTERNODE:\n");
 
-        if(!GetArg("-masternodeaddr", "").empty()) {
-            // Hot masternode (either local or remote) should get its address in
-            // CActiveMasternode::ManageState() automatically and no longer relies on masternodeaddr.
-            return InitError(_("masternodeaddr option is deprecated. Please use masternode.conf to manage your remote masternodes."));
-        }
-
         std::string strMasterNodePrivKey = GetArg("-masternodeprivkey", "");
         if(!strMasterNodePrivKey.empty()) {
-            if(!darkSendSigner.GetKeysFromSecret(strMasterNodePrivKey, activeMasternode.keyMasternode, activeMasternode.pubKeyMasternode))
+            if(!privSendSigner.GetKeysFromSecret(strMasterNodePrivKey, activeMasternode.keyMasternode, activeMasternode.pubKeyMasternode))
                 return InitError(_("Invalid masternodeprivkey. Please see documenation."));
 
             LogPrintf("  pubKeyMasternode: %s\n", CBitcoinAddress(activeMasternode.pubKeyMasternode.GetID()).ToString());
         } else {
             return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
         }
-
-        // resolve ucenter domain to ip
-        if (Params().NetworkIDString() == CBaseChainParams::MAIN)
-        {
-
-            LogPrintf("asdfasdfasdf");
-            std::vector<CNetAddr> vIPs;
-            bool f = LookupHost(Params().ucenter().c_str(), vIPs);
-            if (f)
-            {
-                for (const CNetAddr &ip : vIPs)
-                {
-                    // should be 118.190.150.58
-                    LogPrintf("\t\t\t--------------%s==============\t\t\n", ip.ToString());
-                }
-            }
-
-            if (!f)
-            {
-                LogPrintf("\t\t\t\t------------%s========\t\t\t\n", "lookuphost returned false");
-                return InitError(_("ucenter ip resolving failed, LookupHost returned false."));
-            }
-
-            if (vIPs.empty())
-            {
-                LogPrintf("\t\t\t--------------%s==============\t\t\n", "resolve failed");
-                return InitError(_("ucenter ip resolving failed, IPs empty."));
-            }
-        }
     }
 
-    LogPrintf("Using masternode config file %s\n", GetMasternodeConfigFile().string());
-
-    if(GetBoolArg("-mnconflock", true) && pwalletMain && (masternodeConfig.getCount() > 0)) {
-        LOCK(pwalletMain->cs_wallet);
-        LogPrintf("Locking Masternodes:\n");
-        uint256 mnTxHash;
-        int outputIndex;
-        BOOST_FOREACH(CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
-            mnTxHash.SetHex(mne.getTxHash());
-            outputIndex = boost::lexical_cast<unsigned int>(mne.getOutputIndex());
-            COutPoint outpoint = COutPoint(mnTxHash, outputIndex);
-            // don't lock non-spendable outpoint (i.e. it's already spent or it's not from this wallet at all)
-            if(pwalletMain->IsMine(CTxIn(outpoint)) != ISMINE_SPENDABLE) {
-                LogPrintf("  %s %s - IS NOT SPENDABLE, was not locked\n", mne.getTxHash(), mne.getOutputIndex());
-                continue;
-            }
-            pwalletMain->LockCoin(outpoint);
-            LogPrintf("  %s %s - locked successfully\n", mne.getTxHash(), mne.getOutputIndex());
+	// resolve ucenter domain to ip
+    if (Params().NetworkIDString() == CBaseChainParams::MAIN) {
+        std::string err;
+        if(!mnodecenter.InitCenter(err)) {
+            return InitError(_(err.c_str()));
         }
     }
-
 
     nLiquidityProvider = GetArg("-liquidityprovider", nLiquidityProvider);
     nLiquidityProvider = std::min(std::max(nLiquidityProvider, 0), 100);
-    darkSendPool.SetMinBlockSpacing(nLiquidityProvider * 15);
+    privSendPool.SetMinBlockSpacing(nLiquidityProvider * 15);
 
     fEnablePrivateSend = GetBoolArg("-enableprivatesend", 0);
     fPrivateSendMultiSession = GetBoolArg("-privatesendmultisession", DEFAULT_PRIVATESEND_MULTISESSION);
@@ -1890,7 +1838,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     nInstantSendDepth = GetArg("-instantsenddepth", DEFAULT_INSTANTSEND_DEPTH);
     nInstantSendDepth = std::min(std::max(nInstantSendDepth, 0), 60);
 
-    //lite mode disables all Masternode and Darksend related functionality
+    //lite mode disables all Masternode and PrivSend related functionality
     fLiteMode = GetBoolArg("-litemode", false);
     if(fMasterNode && fLiteMode){
         return InitError("You can not start a masternode in litemode");
@@ -1901,7 +1849,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     LogPrintf("PrivateSend rounds %d\n", nPrivateSendRounds);
     LogPrintf("PrivateSend amount %d\n", nPrivateSendAmount);
 
-    darkSendPool.InitDenominations();
+    privSendPool.InitDenominations();
 
     // ********************************************************* Step 11b: Load cache data
 
@@ -1942,14 +1890,14 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // but don't call it directly to prevent triggering of other listeners like zmq etc.
     // GetMainSignals().UpdatedBlockTip(chainActive.Tip());
     mnodeman.UpdatedBlockTip(chainActive.Tip());
-    darkSendPool.UpdatedBlockTip(chainActive.Tip());
+    privSendPool.UpdatedBlockTip(chainActive.Tip());
     mnpayments.UpdatedBlockTip(chainActive.Tip());
     masternodeSync.UpdatedBlockTip(chainActive.Tip());
     governance.UpdatedBlockTip(chainActive.Tip());
 
     // ********************************************************* Step 11d: start ulord-privatesend thread
 
-    threadGroup.create_thread(boost::bind(&ThreadCheckDarkSendPool));
+    threadGroup.create_thread(boost::bind(&ThreadCheckPrivSendPool));
 
     // ********************************************************* Step 12: start node
 

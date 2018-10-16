@@ -1,7 +1,7 @@
-Ulord Core 0.12.1
+Ulord Core 0.2
 =====================
 
-This is the official reference wallet for Ulord digital currency and comprises the backbone of the Ulord peer-to-peer network. You can [download Ulord Core](https://www.ulord.org/downloads/) or [build it yourself](#building) using the guides below.
+This is the official reference wallet for Ulord Token and comprises the backbone of the Ulord peer-to-peer network. You can [download Ulord Core](https://github.com/UlordChain) and [build it yourself](#building) using the guides below.
 
 Running
 ---------------------
@@ -11,8 +11,8 @@ The following are some helpful notes on how to run Ulord on your native platform
 
 Unpack the files into a directory and run:
 
-- `bin/bitcoin-qt` (GUI) or
-- `bin/bitcoind` (headless)
+- `bin/ulord-qt` (GUI) or
+- `bin/ulordd` (headless)
 
 ### Windows
 

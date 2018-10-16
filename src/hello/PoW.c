@@ -1,11 +1,15 @@
-﻿#include "PoW.h"
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
+
+#include "PoW.h"
 
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#ifndef MAC_OSX
 #include <omp.h>
+#endif
 
 #include "my_time.h"
 #include "common.h"
@@ -325,7 +329,7 @@ void powNistTest(const char *outFileName) {
 			}
 			double endTime = get_wall_time();
 			double costTime = endTime - startTime;
-			fprintf(stdout, "TestCaseIx: %d, Input: %s, IterNum: %lu, Time: %4.2f, Performance: %5.2f bps\n", testCaseIx, \
+			fprintf(stdout, "TestCaseIx: %d, Input: %s, IterNum: %llu, Time: %4.2f, Performance: %5.2f bps\n", testCaseIx, \
 				testInputCase[testCaseIx], iterNum, costTime, ((double)(iterNum * OUTPUT_LEN)) / costTime); fflush(stdout);
 
 			fwrite(outputBuffer, sizeof(uint8_t), OUTPUT_BUFFER_SIZE / sizeof(uint8_t), fp);
@@ -350,6 +354,12 @@ void powNistTest(const char *outFileName) {
 
 
 void helloHash(const uint8_t *mess, uint32_t messLen, uint8_t output[OUTPUT_LEN]) {
+    if(messLen != INPUT_LEN)
+    {
+	//won't get in
+	printf("helloHash:Invalid message length %d\n", messLen);
+	return;
+    }
     int64_t j;
     uint32_t inputLen =messLen; 
     uint8_t input[INPUT_LEN];

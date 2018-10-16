@@ -19,7 +19,7 @@
 #include "main.h" // For minRelayTxFee
 #include "wallet/wallet.h"
 
-#include "darksend.h"
+#include "privsend.h"
 #include "instantx.h"
 
 #include <boost/assign/list_of.hpp> // for 'map_list_of()'
@@ -662,7 +662,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
     }
 
     // actually update labels
-    int nDisplayUnit = BitcoinUnits::ULD;
+    int nDisplayUnit = BitcoinUnits::UT;
     if (model && model->getOptionsModel())
         nDisplayUnit = model->getOptionsModel()->getDisplayUnit();
 

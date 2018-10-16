@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2016-2018 The Ulord Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -285,7 +285,9 @@ bool CSuperblockManager::IsSuperblockTriggered(int nBlockHeight)
     if (!CSuperblock::IsValidBlockHeight(nBlockHeight)) {
         return false;
     }
-    else LogPrintf("SuperBlockHeight right %d\n",nBlockHeight);
+    else {
+        LogPrintf("SuperBlockHeight right %d\n",nBlockHeight);
+    }
     return true;
 }
 
@@ -414,7 +416,7 @@ void CSuperblockManager::AppendFoundersReward(CMutableTransaction& txNewRet, int
     ExtractDestination(foundersScript, address1);
     CBitcoinAddress address2(address1);
 
-    // TODO: PRINT NICE N.N ULD OUTPUT
+    // TODO: PRINT NICE N.N UT OUTPUT
 
     DBG( cout << "CSuperblockManager::AppendFoundersReward Before LogPrintf call, nAmount = " << foundersReward << endl; );
     LogPrintf("NEW Superblock : output to founders (addr %s, amount %d)\n", address2.ToString(), foundersReward);
@@ -484,7 +486,7 @@ void CSuperblockManager::CreateSuperblock(CMutableTransaction& txNewRet, int nBl
             ExtractDestination(payment.script, address1);
             CBitcoinAddress address2(address1);
 
-            // TODO: PRINT NICE N.N ULD OUTPUT
+            // TODO: PRINT NICE N.N UT OUTPUT
 
             DBG( cout << "CSuperblockManager::CreateSuperblock Before LogPrintf call, nAmount = " << payment.nAmount << endl; );
             LogPrintf("NEW Superblock : output %d (addr %s, amount %d)\n", i, address2.ToString(), payment.nAmount);

@@ -22,7 +22,7 @@
 #include "wallet/wallet.h"
 #include "utilstrencodings.h"
 
-#include "darksend.h"
+#include "privsend.h"
 #include "instantx.h"
 #include "masternodeman.h"
 
@@ -1772,6 +1772,7 @@ bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant *grantOu
 }
 
 
+//message process func
 void ThreadMessageHandler()
 {
     boost::mutex condition_mutex;
@@ -2135,8 +2136,8 @@ void RelayTransaction(const CTransaction& tx)
     ss.reserve(10000);
     uint256 hash = tx.GetHash();
     CTxLockRequest txLockRequest;
-    if(mapDarksendBroadcastTxes.count(hash)) { // MSG_DSTX
-        ss << mapDarksendBroadcastTxes[hash];
+    if(mapPrivSendBroadcastTxes.count(hash)) { // MSG_DSTX
+        ss << mapPrivSendBroadcastTxes[hash];
     } else if(instantsend.GetTxLockRequest(hash, txLockRequest)) { // MSG_TXLOCK_REQUEST
         ss << txLockRequest;
     } else { // MSG_TX
@@ -2148,7 +2149,7 @@ void RelayTransaction(const CTransaction& tx)
 void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
 {
     uint256 hash = tx.GetHash();
-    int nInv = mapDarksendBroadcastTxes.count(hash) ? MSG_DSTX :
+    int nInv = mapPrivSendBroadcastTxes.count(hash) ? MSG_DSTX :
                 (instantsend.HasTxLockRequest(hash) ? MSG_TXLOCK_REQUEST : MSG_TX);
     CInv inv(nInv, hash);
     {

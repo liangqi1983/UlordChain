@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -45,9 +46,9 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *pa
         ui->clearButton->setIcon(QIcon());
         ui->sendButton->setIcon(QIcon());
     } else {
-        ui->addButton->setIcon(QIcon(":/icons/" + theme + "/add"));
-        ui->clearButton->setIcon(QIcon(":/icons/" + theme + "/remove"));
-        ui->sendButton->setIcon(QIcon(":/icons/" + theme + "/send_white"));
+//        ui->addButton->setIcon(QIcon(":/icons/" + theme + "/add"));
+//        ui->clearButton->setIcon(QIcon(":/icons/" + theme + "/remove"));
+//        ui->sendButton->setIcon(QIcon(":/icons/" + theme + "/send_white"));
     }
 
     GUIUtil::setupAddressWidget(ui->lineEditCoinControlChange, this);
@@ -64,12 +65,12 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *pa
 
     // Ulord specific
     QSettings settings;
-    if (!settings.contains("bUseDarkSend"))
-        settings.setValue("bUseDarkSend", false);
+    if (!settings.contains("bUsePrivSend"))
+        settings.setValue("bUsePrivSend", false);
     if (!settings.contains("bUseInstantX"))
         settings.setValue("bUseInstantX", false);
 
-    bool fUsePrivateSend = settings.value("bUseDarkSend").toBool();
+    bool fUsePrivateSend = settings.value("bUsePrivSend").toBool();
     bool fUseInstantSend = settings.value("bUseInstantX").toBool();
     ui->checkUsePrivateSend->setVisible(false);
     ui->checkUseInstantSend->setVisible(false);
@@ -145,7 +146,9 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *pa
     ui->sliderSmartFee->setValue(settings.value("nSmartFeeSliderPosition").toInt());
     ui->customFee->setValue(settings.value("nTransactionFee").toLongLong());
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
-    ui->checkBoxFreeTx->setChecked(settings.value("fSendFreeTransactions").toBool());
+    ui->checkBoxFreeTx->setChecked(false);
+    ui->checkBoxFreeTx->hide();
+    ui->labelFreeTx->hide();
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
 }
 
@@ -268,7 +271,7 @@ void SendCoinsDialog::on_sendButton_clicked()
         ).arg(strNearestAmount));
     } else {
         recipients[0].inputType = ALL_COINS;
-        strFunds = tr("using") + " <b>" + tr("any available funds (not anonymous)") + "</b>";
+        strFunds = QString("  ") + tr("any available funds (not anonymous)") + "</b>";
     }
 
     if(ui->checkUseInstantSend->isChecked()) {
@@ -409,16 +412,17 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients, QString strFee,
     questionString.append(tr("<b>(%1 of %2 entries displayed)</b>").arg(displayedEntries).arg(messageEntries));
 
     // Display message box
-    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm send coins"),
-        questionString.arg(formatted.join("<br />")),
-        QMessageBox::Yes | QMessageBox::Cancel,
-        QMessageBox::Cancel);
-
+    QMessageBox box(QMessageBox::Question, tr("Confirm send coins"),questionString.arg(formatted.join("<br />")),QMessageBox::Yes|QMessageBox::Cancel,this);
+    // box.setStandardButtons(QMessageBox::Yes|QMessageBox::Cancel);
+    box.setButtonText(QMessageBox::Yes,tr("Ok"));
+    box.setButtonText(QMessageBox::Cancel,tr("Cancel"));
+    int retval = box.exec();
     if(retval != QMessageBox::Yes)
     {
         fNewRecipientAllowed = true;
         return;
     }
+
 
     // now send the prepared transaction
     WalletModel::SendCoinsReturn sendStatus = model->sendCoins(currentTransaction);
@@ -579,7 +583,7 @@ void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfir
     {
 	    uint64_t bal = 0;
         QSettings settings;
-        settings.setValue("bUseDarkSend", ui->checkUsePrivateSend->isChecked());
+        settings.setValue("bUsePrivSend", ui->checkUsePrivateSend->isChecked());
 	    if(ui->checkUsePrivateSend->isChecked()) {
 		    bal = anonymizedBalance;
 	    } else {
@@ -671,6 +675,8 @@ void SendCoinsDialog::minimizeFeeSection(bool fMinimize)
 
 void SendCoinsDialog::on_buttonChooseFee_clicked()
 {
+    ui->checkBoxFreeTx->hide();
+    ui->labelFreeTx->hide();
     minimizeFeeSection(false);
 }
 

@@ -1,11 +1,14 @@
-﻿#include "oneWayFunction.h"
+// Copyright (c) 2016-2018 Ulord Foundation Ltd.
+#include "oneWayFunction.h"
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#ifndef MAC_OSX
 #include <omp.h>
+#endif
 
 #include "my_time.h"
 #include "common.h"
