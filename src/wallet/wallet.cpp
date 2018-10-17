@@ -3417,7 +3417,7 @@ bool CWallet::CreateTheAddrTrans(const vector<CRecipient>& vecSend, CWalletTx& w
 }
 
 bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet,
-                                int& nChangePosRet, std::string& strFailReason, const CCoinControl* coinControl, bool sign, AvailableCoinsType nCoinType, bool fUseInstantSend)
+                                int& nChangePosRet, std::string& strFailReason, const CCoinControl* coinControl, bool sign, AvailableCoinsType nCoinType, bool fUseInstantSend, bool fCoinLockSend)
 {
     CAmount nFeePay = fUseInstantSend ? CTxLockRequest().GetMinFee() : 0;
 
@@ -3648,7 +3648,12 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
                         else
                         {
                             // Insert change txn at random position:
-                            nChangePosRet = GetRandInt(txNew.vout.size()+1);
+                            //when use for time lock transaction ,change pos is output[1]
+                            if(fCoinLockSend){
+								nChangePosRet = 1;
+							}else{
+								nChangePosRet = GetRandInt(txNew.vout.size()+1);
+							}
                             vector<CTxOut>::iterator position = txNew.vout.begin()+nChangePosRet;
                             txNew.vout.insert(position, newTxOut);
                         }
@@ -3670,7 +3675,10 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
 
                 // BIP69 https://github.com/kristovatlas/bips/blob/master/bip-0069.mediawiki
                 sort(txNew.vin.begin(), txNew.vin.end());
-                sort(txNew.vout.begin(), txNew.vout.end());
+				//when use for time lock transaction ,not sort the txNew.vout
+				if(!fCoinLockSend){
+					sort(txNew.vout.begin(), txNew.vout.end());
+				}
 
                 // If there was change output added before, we must update its position now
                 if (nChangePosRet != -1) {

@@ -436,7 +436,9 @@ static const CRPCCommand vRPCCommands[] =
     { "hidden",          "crosschainrefund",          &crosschainrefund,       true  },
     { "hidden",          "crosschainextractsecret",   &crosschainextractsecret,true  },
     { "hidden",          "crosschainauditcontract",   &crosschainauditcontract,true  },
-    
+    /*coin lock tx*/
+	{ "coinlocktx",      "coinlocktx",                &coinlocktx,             true  },
+	{ "coinunlocktx",    "coinunlocktx",              &coinunlocktx,           true  },
 	{ "hidden", 		 "lockcoin",       &lockcoin,     true  },
 	{ "hidden", 		 "unlockcoin",      	  &unlockcoin,          true  },
 #endif // ENABLE_WALLET

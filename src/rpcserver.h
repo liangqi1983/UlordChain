@@ -351,6 +351,11 @@ extern UniValue crosschainrefund(const UniValue &params, bool fHelp);
 extern UniValue crosschainextractsecret(const UniValue &params, bool fHelp);
 extern UniValue crosschainauditcontract(const UniValue &params, bool fHelp);
 
+//lock coin tx
+UniValue coinlocktx(const UniValue &params, bool fHelp);
+UniValue coinunlocktx(const UniValue &params, bool fHelp);
+
+
 
 // lock coin for some time
 extern UniValue lockcoin(const UniValue &params, bool fHelp);
