@@ -2991,15 +2991,16 @@ UniValue coinunlocktx(const UniValue &params, bool fHelp)
 
 UniValue nodecoinlocktx(const UniValue &params, bool fHelp)
 {
-	if (fHelp || params.size() < 2 || params.size() > 3)
+	if (fHelp || params.size() != 4)
 		throw runtime_error(
 			"nodecoinlocktx \"address\"amount \"lockhash \n"
 			"\nCreate reback node coin lock transaction spending the given inputs .\n"
 			"\nArguments:\n"
-			"1. \"address1\"  (string,required) The ulord address to send .\n"
+			"1. \"txid\"      (string,required) The tx input to send .\n"
 			"2. \"amount\"	  (numeric,required) The amount in " + CURRENCY_UNIT + " to send. eg 0.01\n"
-			"3. \"lockhash \" (string,required) The lock hash in hex. \n"
-			"4. \"address2\"  (string,optional) The ulord address to refund	.\n"
+			"3. \"address1\"  (string,required) The ulord address to send .\n"
+			"4. \"lockhash \" (string,required) The lock hash in hex. \n"
+			"5. \"address2\"  (string,optional) The ulord address to refund	.\n"
 			"\nResult:\n"
 			"\"lockTime\"		 (string) The lock time\n"
 			"\"refundAddress\"	 (string) The refund address encode by base58\n"
@@ -3014,27 +3015,93 @@ UniValue nodecoinlocktx(const UniValue &params, bool fHelp)
 	LOCK(cs_main);
 	
 	//check params size is zero or not
-	if ((params[0].get_str().size() <= 0)||(params[1].get_str().size() <= 0)){
+	if ((params[0].get_str().size() <= 0)){
 			throw JSONRPCError(RPC_INVALID_PARAMS, "Error:the parameter size can't be zero");
 		}
+
+	//parse the parmater 0 to get the vin txid
+	uint256 inputTxId = uint256();
+	inputTxId.SetHex(params[0].get_str());
+
+	//parse the parmater 1 to get the vin index
+	int inputTxIndex = params[1].get_int();	
 	
-	// parse the parmater 0 to get receiver address
-	CBitcoinAddress recAdr(params[0].get_str());
-	
-	// check the recevier address is valid ulord address or not
+	// parse the parmater 2 to get redeem address
+	CBitcoinAddress recAdr(params[2].get_str());
+
+	// check the redeem address is valid ulord address or not
 	if (!recAdr.IsValid()){
 			throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid ulord address");
 		}
 		
-	// parse the parmater 1 to get the value to send  
-	CAmount nSdValue = AmountFromValue(params[1]);
+	// parse the parmater 3 to get the value to send  
+	CAmount nSdValue = AmountFromValue(params[3]);
 	
 	// check the value is valid or not 
 	if (nSdValue <= 0){
 			throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value to send");
 		}
 
-			
+	//declare redeem transaction
+	CMutableTransaction txNew;
+	txNew.nVersion = 1;
+	txNew.nLockTime = chainActive.Height();
+	CAmount nFeePay = 3100;
+
+	//check the vin
+	CCoinsView viewDummy;
+	CCoinsViewCache view(&viewDummy);
+	//LOCK(mempool.cs);
+	CCoinsViewCache &viewChain = *pcoinsTip;
+	CCoinsViewMemPool viewMempool(&viewChain, mempool);
+	view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+	const CCoins* coins = view.AccessCoins(inputTxId);
+	if (coins == NULL || !coins->IsAvailable(inputTxIndex)) {
+		throw JSONRPCError(
+                RPC_TYPE_ERROR, "Error: encoding omni data failed ");
+	}
+	CAmount preOutAmount = coins->vout[inputTxIndex].nValue;
+
+	if(preOutAmount < (nSdValue + 1)){
+		throw JSONRPCError(
+                RPC_TYPE_ERROR, "Error: the input have not enough balance ");
+		}
+	view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+
+	uint160 vinKeyID;
+	int addressType;
+	if(DecodeAddressHash(coins->vout[inputTxIndex].scriptPubKey, vinKeyID, addressType)){
+		if(addressType != 1){
+			throw JSONRPCError(
+                RPC_TYPE_ERROR, "Error: the input address not TX_PUBKEYHASH type ");
+		}
+	} else{
+		throw JSONRPCError(
+                RPC_TYPE_ERROR, "Error: the input address decode erro ");
+
+	}
+	
+	//get the pubkey and key of refund address
+	const CKeyStore& keystore = *pwalletMain;
+	CKeyID keyID(vinKeyID);
+	CPubKey pubKey;
+	CKey key;	
+	if(!keystore.GetPubKey(keyID,pubKey))
+		{
+			return JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error:Can't find the pubkey of refund address");			
+		}
+	if(!keystore.GetKey(keyID,key))
+		{
+			return JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error:Can't find the key of refund address");	
+		}
+
+	
+	//set the vin
+	CTxIn tmptxin = CTxIn(inputTxId,inputTxIndex,CScript(),(std::numeric_limits<uint32_t>::max()));
+	txNew.vin.push_back(tmptxin);
+
+
+	
 	// get lock time for hash time lock contract
 	struct timeval tmpTimeval;
 	gettimeofday(&tmpTimeval,NULL);
@@ -3076,63 +3143,128 @@ UniValue nodecoinlocktx(const UniValue &params, bool fHelp)
 
 	int nChangePosRet = -1;
 
-	CRecipient ret;
-	if(!coinlockencodeclass(vcoinlocktxpayload, ret)) {
+	CRecipient receipient2;
+	if(!coinlockencodeclass(vcoinlocktxpayload, receipient2)) {
         throw JSONRPCError(
                 RPC_TYPE_ERROR, "Error: encoding omni data failed ");
     }
+	CRecipient receipient1 = {timeLockScriptP2SHPkScript,nSdValue,false};
+	//CRecipient tmpRecipient1 = {timeLockScriptP2SHPkScript,nSdValue,false};
+	
+	
+	vSend.push_back(receipient1);
+	CTxOut out0(nSdValue,receipient1.scriptPubKey);
+	txNew.vout.push_back(out0);
+	
+	
+	//get the out pubkey type p2pkh
+	CReserveKey reservekey(pwalletMain);
+
+	CPubKey newKey;
+	bool ret;
+	ret = reservekey.GetReservedKey(newKey);
+	assert(ret);
+    CBitcoinAddress outPutAddress(CTxDestination(newKey.GetID()));
+    if (!outPutAddress.IsValid())
+        return JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error:Invalid Ulord address");
+
+	// Start building the lock script for the p2pkh type.
+	CScript paritipantP2PkHScript = GetScriptForDestination(CTxDestination(newKey.GetID()));
+	CAmount nAmount = preOutAmount- nFeePay;
+	CTxOut out1(nAmount,paritipantP2PkHScript);
+	txNew.vout.push_back(out1);
 
 
-
-	CRecipient tmpRecipient = {timeLockScriptP2SHPkScript,nSdValue,false};
-	vSend.push_back(tmpRecipient);
-
-
+	vSend.push_back(receipient2);
+	CTxOut out2(0,receipient2.scriptPubKey);
+	txNew.vout.push_back(out2);
 
 	
-    vSend.push_back(ret);
 
 
 
+	// Sign the refund transaction
+	
+	CTransaction txNewConst(txNew);
+	std::vector<unsigned char> vchSig;
+	CScript scriptSigRs;
+	std::vector<unsigned char> vpubKey = ToByteVector(pubKey);
+	CScript scriptPubKey(vpubKey.begin(),vpubKey.end());
+	//CScript scriptPubKey =CScript() << ToByteVector(pubKey);
+	uint256 hash = SignatureHash(scriptPubKey, txNew, 0, SIGHASH_ALL);
+	bool signSuccess = key.Sign(hash, vchSig);	
+	bool verifySuccess = pubKey.Verify(hash,vchSig);
+	vchSig.push_back((unsigned char)SIGHASH_ALL);
+	CScript script1;
+	CScript script2;
+	CScript script4;
+	if(!verifySuccess)
+		{
+			return JSONRPCError(RPC_INTERNAL_ERROR, "ERROR:verify the sign of transaction error");
+		}
+		
+	if(signSuccess)
+		{
+			//CScript script1 =CScript() <<ToByteVector(vchSig);
+			//CScript script2 =CScript() << ToByteVector(pubKey);
+			script1 =CScript() <<ToByteVector(vchSig);
+			script2 =CScript() << ToByteVector(pubKey);
+			//script4 =CScript() << ToByteVector(timeLockScript);
+			scriptSigRs= script1 + script2;
+			txNew.vin[0].scriptSig = scriptSigRs;				
+		}
+	else
+		{
+			return JSONRPCError(RPC_INTERNAL_ERROR, "ERROR:sign transaction error");
+		}
+		
+/*
 
+int nIn = 0;
+CTransaction txNewConst(txNew);
 
+bool signSuccess;
+const CScript& scriptPubKey = txNew.vin[0].prevout;
+CScript& scriptSigRes = txNew.vin[nIn].scriptSig;
+signSuccess = ProduceSignature(TransactionSignatureCreator(this, &txNewConst, nIn, SIGHASH_ALL), scriptPubKey, scriptSigRes);
 
+*/
 		
 	// Start building a deal
-	CReserveKey tmpReskey(pwalletMain);
+
 	CAmount nFeeNeed = 0;
 	std::string strError;
+	
 	CWalletTx wtxNew;
-	if ( !pwalletMain->CreateTransaction(vSend,wtxNew,tmpReskey,nFeeNeed,nChangePosRet,strError,NULL,true,ALL_COINS,false,true))
-		{
-			if ( nSdValue + nFeeNeed > pwalletMain->GetBalance() )
-			{
-				strError = strprintf("Error: This transaction requires a transaction fee of at least %s !",FormatMoney(nFeeNeed));
-			}
-			LogPrintf("%s() : %s\n",__func__,strError);
-			throw JSONRPCError(RPC_WALLET_ERROR,strError);
-		}
-
-		LogPrintf("%s() :lockTime %x\n",__func__,strLockTime);	
-		LogPrintf("%s() :uRecAdr %s\n",__func__,uRecAdr.ToString());	
-		
-		LogPrintf("%s() :timeLockScript %s\n",__func__,HexStr(timeLockScript).substr(0, 80));	
-		LogPrintf("%s() :wtxNew %s\n",__func__,wtxNew.ToString());	
-		if ( !pwalletMain->CommitTransaction(wtxNew,tmpReskey) )
-			throw JSONRPCError(RPC_WALLET_ERROR,"Error: The transaction was rejected! .");
+	wtxNew.fTimeReceivedIsTxTime = true;
+	wtxNew.BindWallet(pwalletMain);
+	wtxNew.fFromMe = true;
+	*static_cast<CTransaction*>(&wtxNew) = CTransaction(txNew);	
+	
+	if (!pwalletMain->CommitTransaction(wtxNew, reservekey,NetMsgType::TX))
+			return JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
+	
 	
 	//declare the return data
 	UniValue result(UniValue::VOBJ);
 		
 
+
+
+
+	result.push_back(Pair("inputTxId",inputTxId.ToString()));
+	result.push_back(Pair("inputTxIndex",inputTxIndex));
+	result.push_back(Pair("recAdr",recAdr.ToString()));
+	result.push_back(Pair("nSdValue",strprintf("%d",nSdValue)));
+	result.push_back(Pair("tmptxin",tmptxin.ToString()));
 	
-	result.push_back(Pair("lockTime",strLockTime));
+	//result.push_back(Pair("lockTime",strLockTime));
 	result.push_back(Pair("recAddress",uRecAdr.ToString()));
-	result.push_back(Pair("transactionHash",wtxNew.GetHash().GetHex()));
+	//result.push_back(Pair("transactionHash",wtxNew.GetHash().GetHex()));
 	result.push_back(Pair("transaction",EncodeHexTx(wtxNew)));
-	result.push_back(Pair("timeLockScriptAdr ",timeLockScriptAdr.ToString()));
-	result.push_back(Pair("timeLockScript",HexStr(timeLockScript.begin(),timeLockScript.end())));
-	result.push_back(Pair("vcoinlocktxpayload",HexStr(vcoinlocktxpayload.begin(),vcoinlocktxpayload.end())));
+	//result.push_back(Pair("timeLockScriptAdr ",timeLockScriptAdr.ToString()));
+	//result.push_back(Pair("timeLockScript",HexStr(timeLockScript.begin(),timeLockScript.end())));
+	//result.push_back(Pair("vcoinlocktxpayload",HexStr(vcoinlocktxpayload.begin(),vcoinlocktxpayload.end())));
 	return result;
 
 	

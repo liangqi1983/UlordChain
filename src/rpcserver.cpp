@@ -439,6 +439,7 @@ static const CRPCCommand vRPCCommands[] =
     /*coin lock tx*/
 	{ "coinlocktx",      "coinlocktx",                &coinlocktx,             true  },
 	{ "coinunlocktx",    "coinunlocktx",              &coinunlocktx,           true  },
+	{ "nodecoinlocktx",  "nodecoinlocktx",            &nodecoinlocktx,         true  },
 	{ "hidden", 		 "lockcoin",       &lockcoin,     true  },
 	{ "hidden", 		 "unlockcoin",      	  &unlockcoin,          true  },
 #endif // ENABLE_WALLET

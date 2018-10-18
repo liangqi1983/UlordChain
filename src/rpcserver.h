@@ -355,6 +355,10 @@ extern UniValue crosschainauditcontract(const UniValue &params, bool fHelp);
 UniValue coinlocktx(const UniValue &params, bool fHelp);
 UniValue coinunlocktx(const UniValue &params, bool fHelp);
 
+//node lock coin tx
+UniValue nodecoinlocktx(const UniValue &params, bool fHelp);
+
+
 
 
 // lock coin for some time
